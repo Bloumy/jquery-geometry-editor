@@ -1,0 +1,27 @@
+{
+  "name": "jquery-geometry-editor",
+  "version": "0.0.0",
+  "authors": [
+    "Mickaël Borne <mickael.borne@ign.fr>"
+  ],
+  "description": "JQuery plugin that allows easy geometry edition in HTML forms",
+  "main": "README.md",
+  "keywords": [
+    "JQuery",
+    "Leaflet",
+    "edit",
+    "geometry",
+    "html",
+    "form"
+  ],
+  "license": "MIT",
+  "homepage": "http://mborne.github.io",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

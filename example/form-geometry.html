@@ -1,0 +1,46 @@
+<html>
+<head>
+<meta charset="utf-8" />
+
+<!-- JQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="//cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+<script src="//cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+<!-- Leaflet Omnivore (WKT)
+<script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.2.0/leaflet-omnivore.min.js'></script>
+ -->
+<!-- Leaflet.draw -->
+<link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-draw/v0.2.2/leaflet.draw.css' rel='stylesheet' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-draw/v0.2.2/leaflet.draw.js'></script>
+
+<!-- jquery-geometry-editor -->
+<script type="text/javascript" src="../src/jquery-geometry-editor.js"></script>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('.geometry').geometry({
+		'type': 'Point',
+		'editable': true,
+		'hide': false
+	});
+}) ;
+
+</script>
+</head>
+<body>
+
+<form action="#" method="get">
+    <label>Nom : </label><input type="text" value="Votre nom" /><br />
+    <label>Lieu de l'accident : </label>
+    <!-- POINT(2.20 48.51) -->
+    <textarea class="geometry" name="the_geom">
+    </textarea>
+    
+    <input type="submit" />
+</form>
+
+</body>
+</html>
