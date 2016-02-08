@@ -1,0 +1,47 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+
+    <style type="text/css">
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+    </style>
+
+    <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../bower_components/leaflet/dist/leaflet.css" />
+    <script type="text/javascript" src="../bower_components/leaflet/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../bower_components/leaflet-draw/dist/leaflet.draw.css" />
+    <script type="text/javascript" src="../bower_components/leaflet-draw/dist/leaflet.draw.js"></script>
+
+    <script type="text/javascript" src="../bower_components/leaflet-omnivore/leaflet-omnivore.min.js"></script>
+
+    <script type="text/javascript" src="../dist/jquery-geometry-editor.js"></script>
+</head>
+<body>
+
+    <form target="#" method="get">
+        <label for="geometry">Position : </label><br />
+        <textarea id="geometry" name="geometry">
+            {"type": "Polygon","coordinates":[[ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],[100.0, 1.0], [100.0, 0.0] ]]}
+        </textarea>
+    </form>
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#geometry').geometryEditor({
+                width: 400,
+                height: 400,
+                hide: false,
+                editable: true
+            });
+        });
+    </script>
+
+</body>
+</html>

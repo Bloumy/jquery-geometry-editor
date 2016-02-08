@@ -118,11 +118,13 @@
 
 		var self = this ;
 		this.map.on('draw:created', function(e) {
+			console.log(e);
 			self.drawnItems.addLayer(e.layer);
 			self.inputElement.val(JSON.stringify(self.drawnItems.toGeoJSON()));
 		});
 
 		this.map.on('draw:edited', function (e) {
+			console.log(e);
 			self.inputElement.val(JSON.stringify(self.drawnItems.toGeoJSON()));
 		});
 	} ;
