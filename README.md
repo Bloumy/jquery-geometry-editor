@@ -1,7 +1,6 @@
 # JQuery Geometry Editor
 
-jQuery plugin providing a geometry editor based on leaflet. A map is synchronized
-with an input (such as text input).
+jQuery plugin providing a geometry editor based on leaflet. The map is synchronized with an input (such as text input).
 
 ## Dependencies
 
@@ -13,28 +12,66 @@ with an input (such as text input).
 ## Basic usage
 
 ```
-$(document).ready(function(){
-    $('#geometry').geometryEditor({
-        height: 400,
-        hide: false,
-        editable: true
-    });
+$('#geometry').geometryEditor({
+    height: 400,
+    hide: false,
+    editable: true
 });
 ```
 
-## Examples
+See :
 
 * [Basic example (bundle, i.e. built in dependencies)](example/basic.html)
 * [Basic example (external dependencies)](example/basic-without-bundle.html)
 
-## Settings
 
-* width (string|number): map width (ex : '500', default '100%')
-* height (string|number) : map height (ex: '500', default '500px')
+## Advanced use
+
+### Retrieve the geometry editor
+
+```
+// Get GeometryEditor
+$('#geometry').data('editor')
+```
+
+## GeometryEditor options
+
+### Basic options
+
+* width (string|number)
+
+The map width (ex : '500', default '100%')
+
+* height (string|number)
+
+The map height
+
+### Edit options
+
+* editable (boolean)
+
 
 ## TODO
 
-* Allow edition of GeometryCollection, MultiPoint, MultiLineString, MultiPolygon
-* Generate random map id
-* Allow ```$('.geometry').geometryEditor()``` (multiple maps on same page, jQuery forEach)
-* Bundle with leaflet and its plugins
+### Bugs
+
+* Multiple maps are not yet allowed
+
+Generate random map id and allow ```$('.geometry').geometryEditor()``` (multiple maps on same page, jQuery forEach)
+
+* Fix edition of GeometryCollection, MultiPoint, MultiLineString, MultiPolygon
+
+### Features
+
+* Option "type" (enum)
+
+Point|LineString|Polygon|MultiPolygon|MultiLineString|MultiPolygon|GeometryCollection)
+
+Restrict edition to the given type.
+
+### Clear and test code
+
+* CommonJS
+* Rely only on npm for the build
+* Test
+    * FeatureCollection to Geometry
