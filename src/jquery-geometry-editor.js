@@ -75,16 +75,16 @@
 		var drawnItems = new L.FeatureGroup();
 		this.map.addLayer(drawnItems);
 
-		var data = this.inputElement.val() ;
-		console.log(data);
+		var data = $.trim( this.inputElement.val() ) ;
 		if ( data !== '' ){
 			L.geoJson(JSON.parse(data),{
 				onEachFeature: function(feature, layer) {
 					drawnItems.addLayer(layer);
 					layer.on('click',
 						function(e){
-							if(selectedFeature)
+							if( typeof selectedFeature !== "undefined" ){
 								selectedFeature.editing.disable();
+							}
 							selectedFeature = e.target;
 							e.target.editing.enable();
 						}
@@ -119,12 +119,76 @@
 		var self = this ;
 		this.map.on('draw:created', function(e) {
 			self.drawnItems.addLayer(e.layer);
-			self.inputElement.val(JSON.stringify(self.drawnItems.toGeoJSON()));
+			self.serializeGeometry();
+		});
+
+		this.map.on('draw:deleted', function (e) {
+			self.serializeGeometry();
 		});
 
 		this.map.on('draw:edited', function (e) {
-			self.inputElement.val(JSON.stringify(self.drawnItems.toGeoJSON()));
+			self.serializeGeometry();
 		});
+	} ;
+
+
+	/**
+	 * Serialize geometry to input field
+	 */
+	GeometryEditor.prototype.serializeGeometry = function(){
+		var featureCollection = this.drawnItems.toGeoJSON() ;
+		var geometry = this.featureCollectionToGeometry(featureCollection);
+		this.inputElement.val(JSON.stringify(geometry));
+	} ;
+
+
+	/**
+	 * Converts FeatureCollection to normalized geometry
+	 */
+	GeometryEditor.prototype.featureCollectionToGeometry = function(featureCollection){
+		var geometries = [] ;
+		featureCollection.features.forEach(function(feature){
+			geometries.push( feature.geometry ) ;
+		});
+		if ( geometries.length <= 1 ){
+			return geometries[0];
+		}else{
+			return this.geometriesToCollection(geometries) ;
+		}
+	} ;
+
+	/**
+	 * Converts an array of geometries to a collection (MultiPoint, MultiLineString,
+	 * MultiPolygon, GeometryCollection)
+	 */
+	GeometryEditor.prototype.geometriesToCollection = function(geometries){
+		// count by geometry type
+		var counts = {};
+		geometries.forEach(function(geometry){
+			if ( typeof counts[geometry.type] === 'undefined' ){
+				counts[geometry.type] = 1 ;
+			}else{
+				counts[geometry.type]++ ;
+			}
+		}) ;
+
+		var geometryTypes = Object.keys(counts) ;
+		if ( geometryTypes.length > 1 ){
+			return {
+				"type": "GeometryCollection",
+				"geometries": geometries
+			} ;
+		}else{
+			var multiType = "Multi"+Object.keys(counts)[0] ;
+			var coordinates = [];
+			geometries.forEach(function(geometry){
+				coordinates.push(geometry.coordinates);
+			}) ;
+			return {
+				"type": multiType,
+				"coordinates": coordinates
+			} ;
+		}
 	} ;
 
 

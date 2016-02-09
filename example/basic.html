@@ -25,23 +25,23 @@
 </head>
 <body>
 
-    <form target="#" method="get">
-        <label for="geometry">Position : </label><br />
-        <textarea id="geometry" name="geometry">
-            {"type": "Polygon","coordinates":[[ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],[100.0, 1.0], [100.0, 0.0] ]]}
-        </textarea>
-    </form>
+    <h1>Principe</h1>
 
+    <form target="#" method="get" style="width: 100%;">
+        <label for="geometry">Position (cachée par défaut, modifiée lorsque la carte est modifiée) </label><br />
+        <textarea id="geometry" name="geometry" cols="100" width: "100%">{"type": "Polygon","coordinates":[[ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],[100.0, 1.0], [100.0, 0.0] ]]}</textarea>
+    </form>
+    
     <script type="text/javascript">
         $(document).ready(function(){
             $('#geometry').geometryEditor({
-                width: 400,
                 height: 400,
                 hide: false,
                 editable: true
             });
         });
     </script>
+
 
 </body>
 </html>
