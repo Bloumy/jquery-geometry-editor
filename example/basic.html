@@ -13,15 +13,8 @@
 
     <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="../bower_components/leaflet/dist/leaflet.css" />
-    <script type="text/javascript" src="../bower_components/leaflet/dist/leaflet.js"></script>
-
-    <link rel="stylesheet" type="text/css" href="../bower_components/leaflet-draw/dist/leaflet.draw.css" />
-    <script type="text/javascript" src="../bower_components/leaflet-draw/dist/leaflet.draw.js"></script>
-
-    <script type="text/javascript" src="../bower_components/leaflet-omnivore/leaflet-omnivore.min.js"></script>
-
-    <script type="text/javascript" src="../dist/jquery-geometry-editor.js"></script>
+    <link rel="stylesheet" type="text/css" href="../dist/bundle.css" />
+    <script type="text/javascript" src="../dist/bundle.js"></script>    
 </head>
 <body>
 
@@ -31,7 +24,7 @@
         <label for="geometry">Position (cachée par défaut, modifiée lorsque la carte est modifiée) </label><br />
         <textarea id="geometry" name="geometry" cols="100" width: "100%">{"type": "Polygon","coordinates":[[ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],[100.0, 1.0], [100.0, 0.0] ]]}</textarea>
     </form>
-    
+
     <script type="text/javascript">
         $(document).ready(function(){
             $('#geometry').geometryEditor({
