@@ -1,0 +1,65 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+
+    <style type="text/css">
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .map::before {
+        content: "<br />";
+    }
+
+
+    </style>
+
+    <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../dist/bundle.css" />
+    <script type="text/javascript" src="../dist/bundle.js"></script>
+</head>
+<body>
+
+    <h1>Multiple maps</h1>
+
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="width: 20%;">Name</th>
+                <th style="width: 100%;">Place</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Eifel tower</td>
+                <td>
+                    <span class="geometry">{"type":"Point","coordinates":[2.2945504185918253,48.85828370724355]}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>Paris</td>
+                <td>
+                    <span class="geometry">{"type":"Polygon","coordinates":[[[2.4373168777674437,48.8936153614802],[2.3205871414393187,48.922499263758255],[2.2505492996424437,48.89271247049609],[2.2464294265955687,48.801436476249386],[2.415344221517443,48.79058074474321],[2.434570295736193,48.827661462789415],[2.4373168777674437,48.8936153614802]]]}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        L.Icon.Default.imagePath = "../dist/images" ;
+
+        $(document).ready(function(){
+            $('.geometry').geometryEditor({
+                height: 300,
+                width: '100%'
+            });
+        });
+    </script>
+
+
+</body>
+</html>

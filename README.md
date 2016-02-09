@@ -55,10 +55,6 @@ The map height
 
 ### Bugs
 
-* Multiple maps are not yet allowed
-
-Generate random map id and allow ```$('.geometry').geometryEditor()``` (multiple maps on same page, jQuery forEach)
-
 * Fix edition of GeometryCollection, MultiPoint, MultiLineString, MultiPolygon
 
 ### Features

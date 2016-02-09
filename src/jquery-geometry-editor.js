@@ -1,5 +1,14 @@
 (function($) {
 
+	function guid() {
+		function s4() {
+			return Math.floor((1 + Math.random()) * 0x10000)
+			.toString(16)
+			.substring(1);
+		}
+		return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+			s4() + '-' + s4() + s4() + s4();
+	}
 
 	var GeometryEditor = function(inputElement,options){
 		this.inputElement = inputElement ;
@@ -17,10 +26,6 @@
 
 			editable: true,
 
-			/*
-			 * usefull option for multiple map in same form
-			 */
-			mapId: "map",
 			width: '100%',
 			height: '500'
 		}, options );
@@ -45,13 +50,15 @@
 	 */
 	GeometryEditor.prototype.initMap = function(){
 		// create map div
-		var $mapDiv = $('<div id="'+this.settings.mapId+'"></div>') ;
+		var mapId = 'map-'+guid();
+		var $mapDiv = $('<div id="'+mapId+'"></div>') ;
+		$mapDiv.addClass('map');
 		$mapDiv.css('width', this.settings.width) ;
 		$mapDiv.css('height', this.settings.height) ;
 		$mapDiv.insertAfter(this.inputElement);
 
 		// create leaflet map
-		var map = L.map(this.settings.mapId).setView(
+		var map = L.map(mapId).setView(
 			[45.0, 2.0], 4
 		);
 
@@ -68,6 +75,22 @@
 	} ;
 
 
+	GeometryEditor.prototype.getInputData = function(){
+		if ( typeof this.inputElement.attr('value') !== 'undefined' ){
+			return $.trim( this.inputElement.val() ) ;
+		}else{
+			return $.trim( this.inputElement.html() ) ;
+		}
+	} ;
+
+	GeometryEditor.prototype.setInputData = function(value){
+		if ( typeof this.inputElement.attr('value') !== 'undefined' ){
+			this.inputElement.val(value) ;
+		}else{
+			this.inputElement.html(value) ;
+		}
+	} ;
+
 	/**
 	 * Init map from inputElement data
 	 */
@@ -75,7 +98,7 @@
 		var drawnItems = new L.FeatureGroup();
 		this.map.addLayer(drawnItems);
 
-		var data = $.trim( this.inputElement.val() ) ;
+		var data = this.getInputData();
 		if ( data !== '' ){
 			L.geoJson(JSON.parse(data),{
 				onEachFeature: function(feature, layer) {
@@ -138,7 +161,7 @@
 	GeometryEditor.prototype.serializeGeometry = function(){
 		var featureCollection = this.drawnItems.toGeoJSON() ;
 		var geometry = this.featureCollectionToGeometry(featureCollection);
-		this.inputElement.val(JSON.stringify(geometry));
+		this.setInputData(JSON.stringify(geometry));
 	} ;
 
 
@@ -193,8 +216,10 @@
 
 
 	$.fn.geometryEditor = function( options ){
-		var editor = new GeometryEditor(this,options);
-		this.data('editor',editor);
+		return this.each(function() {
+			var editor = new GeometryEditor($(this),options);
+			$(this).data('editor',editor);
+		});
 	} ;
 
 })(jQuery);
