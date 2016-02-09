@@ -14,7 +14,7 @@
     <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="../dist/bundle.css" />
-    <script type="text/javascript" src="../dist/bundle.js"></script>    
+    <script type="text/javascript" src="../dist/bundle.js"></script>
 </head>
 <body>
 
@@ -26,6 +26,8 @@
     </form>
 
     <script type="text/javascript">
+        L.Icon.Default.imagePath = "../dist/images" ;
+        
         $(document).ready(function(){
             $('#geometry').geometryEditor({
                 height: 400,

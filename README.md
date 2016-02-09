@@ -5,12 +5,27 @@ with an input (such as text input).
 
 ## Dependencies
 
-* [leaflet](http://leafletjs.com/) : Map
-* [leaflet-omnivore](https://github.com/mapbox/leaflet-omnivore) : WKT format
+* [JQuery](https://jquery.com/)
+* [leaflet](http://leafletjs.com/) : Open-source JavaScript library for mobile-friendly interactive maps
+* [leaflet-draw](https://github.com/Leaflet/Leaflet.draw) : Vector drawing and editing plugin for Leaflet
+* [leaflet-omnivore](https://github.com/mapbox/leaflet-omnivore) : Universal format parser for Leaflet & Mapbox.js
 
-## Usage
+## Basic usage
 
-TODO
+```
+$(document).ready(function(){
+    $('#geometry').geometryEditor({
+        height: 400,
+        hide: false,
+        editable: true
+    });
+});
+```
+
+## Examples
+
+* [Basic example (bundle, i.e. built in dependencies)](example/basic.html)
+* [Basic example (external dependencies)](example/basic-without-bundle.html)
 
 ## Settings
 
@@ -19,6 +34,7 @@ TODO
 
 ## TODO
 
+* Allow edition of GeometryCollection, MultiPoint, MultiLineString, MultiPolygon
 * Generate random map id
 * Allow ```$('.geometry').geometryEditor()``` (multiple maps on same page, jQuery forEach)
 * Bundle with leaflet and its plugins

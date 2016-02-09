@@ -17,6 +17,12 @@ module.exports = function(grunt) {
                     {
                         expand: true,
                         flatten: true,
+                        src: ['bower_components/leaflet/dist/images/*.png'],
+                        dest: 'dist/images'
+                    },
+                    {
+                        expand: true,
+                        flatten: true,
                         src: ['bower_components/leaflet-draw/dist/images/*.png'],
                         dest: 'dist/images'
                     }
@@ -26,7 +32,7 @@ module.exports = function(grunt) {
 
         concat: {
             options: {
-                separator: ';',
+                //separator: ';',
             },
             dist: {
                 src: ['src/**/*.js'],
