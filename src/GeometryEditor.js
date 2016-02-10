@@ -120,19 +120,8 @@ GeometryEditor.prototype.setGeometry = function(geometry){
 
     var self = this ;
     L.geoJson(geometries,{
-        // TODO avoid hacks for leaflet editing...
-        // https://github.com/Leaflet/Leaflet.draw/issues/364
         onEachFeature: function(feature, layer) {
             self.drawLayer.addLayer(layer);
-            layer.on('click',
-                function(e){
-                    if( typeof selectedFeature !== "undefined" ){
-                        selectedFeature.editing.disable();
-                    }
-                    selectedFeature = e.target;
-                    e.target.editing.enable();
-                }
-            );
         }
     }) ;
     if ( geometries.length !== 0 ){
@@ -208,7 +197,7 @@ GeometryEditor.prototype.initDrawControls = function(){
 
     var self = this ;
     this.map.on('draw:created', function(e) {
-        if ( ! isSingleGeometryType( self.getGeometryType() ) ){
+        if ( isSingleGeometryType( self.getGeometryType() ) ){
             self.drawLayer.clearLayers();
         }
         self.drawLayer.addLayer(e.layer);
