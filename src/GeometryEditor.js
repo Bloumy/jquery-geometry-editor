@@ -223,7 +223,11 @@ GeometryEditor.prototype.initDrawControls = function(){
 GeometryEditor.prototype.serializeGeometry = function(){
     var featureCollection = this.drawLayer.toGeoJSON() ;
     var geometry = featureCollectionToGeometry(featureCollection);
-    this.setRawData(JSON.stringify(geometry));
+    if ( geometry ){
+        this.setRawData(JSON.stringify(geometry));
+    }else{
+        this.setRawData("");
+    }
 } ;
 
 
