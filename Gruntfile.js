@@ -13,20 +13,25 @@ module.exports = function(grunt) {
 
         copy: {
             main: {
-                files: [
-                    {
-                        expand: true,
-                        flatten: true,
-                        src: ['bower_components/leaflet/dist/images/*.png'],
-                        dest: 'dist/images'
-                    },
-                    {
-                        expand: true,
-                        flatten: true,
-                        src: ['bower_components/leaflet-draw/dist/images/*.png'],
-                        dest: 'dist/images'
-                    }
-                ]
+                files: [{
+                    expand: true,
+                    flatten: true,
+                    src: ['bower_components/leaflet/dist/images/*.png'],
+                    dest: 'dist/images'
+                }, {
+                    expand: true,
+                    flatten: true,
+                    src: ['bower_components/leaflet-draw/dist/images/*.png'],
+                    dest: 'dist/images'
+                }]
+            }
+        },
+
+        browserify: {
+            dist: {
+                files: {
+                    'dist/jquery-geometry-editor.js': ['src/**/*.js']
+                }
             }
         },
 
@@ -34,16 +39,12 @@ module.exports = function(grunt) {
             options: {
                 //separator: ';',
             },
-            dist: {
-                src: ['src/**/*.js'],
-                dest: 'dist/jquery-geometry-editor.js',
-            },
             "bundle-js": {
                 src: [
                     'bower_components/leaflet/dist/leaflet.js',
                     'bower_components/leaflet-draw/dist/leaflet.draw.js',
                     'bower_components/leaflet-omnivore/leaflet-omnivore.min.js',
-                    'src/**/*.js'
+                    'dist/jquery-geometry-editor.js'
                 ],
                 dest: 'dist/bundle.js',
             },
@@ -54,12 +55,24 @@ module.exports = function(grunt) {
                 ],
                 dest: 'dist/bundle.css',
             }
+        },
+
+
+        watch: {
+            scripts: {
+                files: ['src/**/*.js'],
+                tasks: ['build']
+            },
         }
     });
 
+    grunt.loadNpmTasks('grunt-browserify');
+    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-concat');
 
-    grunt.registerTask('default', ['jshint', 'copy', 'concat']);
+    grunt.registerTask('build', ['jshint', 'browserify', 'concat', 'copy']);
+
+    grunt.registerTask('default', ['build']);
 };
