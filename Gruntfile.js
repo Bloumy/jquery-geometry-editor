@@ -57,6 +57,19 @@ module.exports = function(grunt) {
             }
         },
 
+        uglify: {
+            editor: {
+                files: {
+                    'dist/jquery-geometry-editor.min.js': ['dist/jquery-geometry-editor.js']
+                }
+            },
+            bundle: {
+                files: {
+                    'dist/bundle.min.js': ['dist/bundle.js']
+                }
+            }
+        },
+
 
         watch: {
             scripts: {
@@ -71,8 +84,9 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
 
-    grunt.registerTask('build', ['jshint', 'browserify', 'concat', 'copy']);
+    grunt.registerTask('build', ['jshint', 'browserify', 'concat', 'uglify', 'copy']);
 
     grunt.registerTask('default', ['build']);
 };
