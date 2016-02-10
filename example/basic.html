@@ -1,45 +1,59 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <style type="text/css">
-    html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-    }
-    </style>
+    <link href="../bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
 
     <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="../dist/bundle.css" />
     <script type="text/javascript" src="../dist/bundle.js"></script>
+    <script type="text/javascript">
+        L.Icon.Default.imagePath = "../dist/images";
+
+        $(document).ready(function() {
+            $('#position').geometryEditor({
+                height: 400,
+                geometryType: 'Point'
+            });
+
+            // demo purpose
+
+            function displayPosition(){
+                $("#result").html($("#position").val());
+            }
+            displayPosition();
+
+            $('#position').bind('change',displayPosition) ;
+        });
+
+    </script>
 </head>
 <body>
 
-    <h1>Restriction to a geometry type (Point)</h1>
+    <h1>Create a place</h1>
 
-    <form target="#" method="get" style="width: 100%;">
-        <label for="geometry">Position (cachée par défaut, modifiée lorsque la carte est modifiée) </label><br />
-        <textarea id="geometry" name="geometry" cols="100" width: "100%">
-            {"type":"Point","coordinates":[2.33,48.85]}
-        </textarea>
+    <form target="#" method="get" onsubmit="return false;">
+        <div class="form-group">
+            <label for="placeName">Place</label>
+            <input type="text" class="form-control" id="placeName" placeholder="Place..." />
+        </div>
+        <div class="form-group">
+            <label for="position">Position</label>
+            <textarea id="position" name="geometry" class="hidden">
+                {"type":"Point","coordinates":[2.33,48.85]}
+            </textarea>
+        </div>
     </form>
 
-    <script type="text/javascript">
-        L.Icon.Default.imagePath = "../dist/images" ;
+    <h1>Position content :</h1>
 
-        $(document).ready(function(){
-            $('#geometry').geometryEditor({
-                height: 400,
-                hide: false,
-                editable: true,
-                type: 'Point'
-            });
-        });
-    </script>
-
-
+    <div id="result" class="well"></div>
 </body>
+
 </html>

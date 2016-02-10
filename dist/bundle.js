@@ -9858,7 +9858,7 @@ var guid = require('./util/guid.js');
 var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
 
-var isMultiple = require('./geometryType/isMultiple.js') ;
+var isSingleGeometryType = require('./geometryType/isSingleGeometryType.js') ;
 
 /**
  * GeometryEditor component creates a map synchronized with an input element.
@@ -9957,6 +9957,7 @@ GeometryEditor.prototype.setRawData = function(value){
     }else{
         this.dataElement.html(value) ;
     }
+    this.dataElement.trigger('change');
 } ;
 
 /**
@@ -10054,7 +10055,7 @@ GeometryEditor.prototype.initDrawControls = function(){
 
     var self = this ;
     this.map.on('draw:created', function(e) {
-        if ( ! isMultiple( self.getGeometryType() ) ){
+        if ( ! isSingleGeometryType( self.getGeometryType() ) ){
             self.drawLayer.clearLayers();
         }
         self.drawLayer.addLayer(e.layer);
@@ -10089,16 +10090,16 @@ GeometryEditor.prototype.serializeGeometry = function(){
 
 module.exports = GeometryEditor ;
 
-},{"./geometryType/isMultiple.js":3,"./util/featureCollectionToGeometry.js":6,"./util/geometryToSimpleGeometries":8,"./util/guid.js":9}],3:[function(require,module,exports){
+},{"./geometryType/isSingleGeometryType.js":3,"./util/featureCollectionToGeometry.js":6,"./util/geometryToSimpleGeometries":8,"./util/guid.js":9}],3:[function(require,module,exports){
 
 /**
  * Indicates if the given type corresponds to a mutli geometry
  */
-var isMultiple = function(geometryType) {
-    return geometryType.startsWith("Multi") || (geometryType === "GeometryCollection");
+var isSingleGeometryType = function(geometryType) {
+    return ["Point","LineString","Polygon"].indexOf(geometryType);
 };
 
-module.exports = isMultiple ;
+module.exports = isSingleGeometryType ;
 
 },{}],4:[function(require,module,exports){
 var ge = {
@@ -10229,6 +10230,9 @@ var geometryCollectionToGeometries = function(geometryCollection){
 
 
 /**
+ *
+ * Converts a geometry to an array of single geometries. For
+ * example, MultiPoint is converted to Point[].
  *
  * @param {Geometry} geometry
  * @returns {Geometry[]} simple geometries

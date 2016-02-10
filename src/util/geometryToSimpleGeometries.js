@@ -36,6 +36,9 @@ var geometryCollectionToGeometries = function(geometryCollection){
 
 /**
  *
+ * Converts a geometry to an array of single geometries. For
+ * example, MultiPoint is converted to Point[].
+ *
  * @param {Geometry} geometry
  * @returns {Geometry[]} simple geometries
  */

@@ -1,6 +1,43 @@
 # JQuery Geometry Editor
 
-jQuery plugin providing a geometry editor based on leaflet. The map is synchronized with an input (such as text input).
+## Motivation
+
+When a date is needed is an HTML form, we simply pick a [Datepicker](https://jqueryui.com/datepicker/). When it's a shape : We write GeoJSON REST APIs and code client based on leaflet, openlayers, etc.
+
+What about a new approach?
+
+* Create a classic form with a serialized Geometry :
+
+```
+<form>
+    <!-- a form field -->
+    Place name : <input type="text" name="name" value="The name" />
+    <!-- a serialized geometry -->
+    Position : <textarea id="position" name="position"
+    >
+    {
+        "type": "Point",
+        "coordinates": [5.0,45.0]
+    }
+    </textarea>
+</form>
+```
+
+* Enable geometry editor :
+
+```
+$('#position').geometryEditor({
+    width: '100%',
+    height: 400,
+    type: 'Point'
+});
+```
+
+* Get the form :
+
+<input type="text" name="name" value="The name" />
+![Point example](doc/images/point.png)
+
 
 ## Dependencies
 
@@ -9,13 +46,13 @@ jQuery plugin providing a geometry editor based on leaflet. The map is synchroni
 * [leaflet-draw](https://github.com/Leaflet/Leaflet.draw) : Vector drawing and editing plugin for Leaflet
 * [leaflet-omnivore](https://github.com/mapbox/leaflet-omnivore) : Universal format parser for Leaflet & Mapbox.js
 
-## Basic usage
+## Viewer mode
+
+Controls can be disabled to get a geometry viewer :
 
 ```
 $('#geometry').geometryEditor({
-    height: 400,
-    hide: false,
-    editable: true
+    editable: false
 });
 ```
 
@@ -25,9 +62,21 @@ See :
 * [Basic example (external dependencies)](example/basic-without-bundle.html)
 
 
+## Supported geometry types
+
+* Point
+* LineString
+* Polygon
+* MultiPoint
+* MultiLineString
+* MultiPolygon
+* GeometryCollection
+
 ## Advanced use
 
 ### Retrieve the geometry editor
+
+The GeometryEditor is attached to the input field and can be retrieved :
 
 ```
 // Get GeometryEditor
