@@ -50,12 +50,7 @@ The map height
 
 * editable (boolean)
 
-
 ## TODO
-
-### Bugs
-
-* Fix edition of GeometryCollection, MultiPoint, MultiLineString, MultiPolygon
 
 ### Features
 
@@ -67,7 +62,6 @@ Restrict edition to the given type.
 
 ### Clear and test code
 
-* CommonJS
 * Rely only on npm for the build
 * Test
     * FeatureCollection to Geometry
