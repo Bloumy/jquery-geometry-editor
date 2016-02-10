@@ -9874,18 +9874,19 @@ var GeometryEditor = function(dataElement,options){
          * display or hide corresponding form item
          */
         hide: true,
-
         editable: true,
-
         width: '100%',
-        height: '500'
+        height: '500',
+        lon: 45.0,
+        lat: 2.0,
+        zoom: 4
     }, options );
 
     // init map
     this.map = this.initMap();
 
     // init features
-    this.drawnItems = this.initFeatures() ;
+    this.initDrawLayer() ;
 
     // draw controls
     if ( this.settings.editable ){
@@ -9910,7 +9911,8 @@ GeometryEditor.prototype.initMap = function(){
 
     // create leaflet map
     var map = L.map(mapId).setView(
-        [45.0, 2.0], 4
+        [this.settings.lat, this.settings.lon],
+        this.settings.zoom
     );
 
     // init layers
@@ -9955,35 +9957,46 @@ GeometryEditor.prototype.setRawData = function(value){
 } ;
 
 /**
+ * Set the geometry
+ */
+GeometryEditor.prototype.setGeometry = function(geometry){
+    this.drawLayer.clearLayers();
+    var geometries = geometryToSimpleGeometries(geometry);
+
+    var self = this ;
+    L.geoJson(geometries,{
+        onEachFeature: function(feature, layer) {
+            self.drawLayer.addLayer(layer);
+            layer.on('click',
+                function(e){
+                    if( typeof selectedFeature !== "undefined" ){
+                        selectedFeature.editing.disable();
+                    }
+                    selectedFeature = e.target;
+                    e.target.editing.enable();
+                }
+            );
+        }
+    }) ;
+    if ( geometries.length !== 0 ){
+        this.map.fitBounds(this.drawLayer.getBounds());
+    }
+    this.serializeGeometry();
+} ;
+
+
+
+/**
  * Init map from dataElement data
  */
-GeometryEditor.prototype.initFeatures = function(){
-    var drawnItems = L.featureGroup().addTo(this.map);
+GeometryEditor.prototype.initDrawLayer = function(){
+    this.drawLayer = L.featureGroup().addTo(this.map);
 
     var data = this.getRawData();
     if ( data !== '' ){
         var geometry = JSON.parse(data);
-        var geometries = geometryToSimpleGeometries(geometry);
-        console.log(geometries);
-
-        L.geoJson(geometries,{
-            onEachFeature: function(feature, layer) {
-                console.log(layer);
-                drawnItems.addLayer(layer);
-                layer.on('click',
-                    function(e){
-                        if( typeof selectedFeature !== "undefined" ){
-                            selectedFeature.editing.disable();
-                        }
-                        selectedFeature = e.target;
-                        e.target.editing.enable();
-                    }
-                );
-            }
-        }) ;
-        this.map.fitBounds(drawnItems.getBounds());
+        this.setGeometry(geometry);
     }
-    return drawnItems ;
 } ;
 
 
@@ -10001,7 +10014,7 @@ GeometryEditor.prototype.initDrawControls = function(){
             circle: false
         },
         edit: {
-            featureGroup: this.drawnItems
+            featureGroup: this.drawLayer
         }
     } ;
 
@@ -10010,7 +10023,7 @@ GeometryEditor.prototype.initDrawControls = function(){
 
     var self = this ;
     this.map.on('draw:created', function(e) {
-        self.drawnItems.addLayer(e.layer);
+        self.drawLayer.addLayer(e.layer);
         self.serializeGeometry();
     });
 
@@ -10028,7 +10041,7 @@ GeometryEditor.prototype.initDrawControls = function(){
  * Serialize geometry to input field
  */
 GeometryEditor.prototype.serializeGeometry = function(){
-    var featureCollection = this.drawnItems.toGeoJSON() ;
+    var featureCollection = this.drawLayer.toGeoJSON() ;
     var geometry = featureCollectionToGeometry(featureCollection);
     this.setRawData(JSON.stringify(geometry));
 } ;

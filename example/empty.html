@@ -1,0 +1,41 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+
+    <style type="text/css">
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+    </style>
+
+    <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../dist/bundle.css" />
+    <script type="text/javascript" src="../dist/bundle.js"></script>
+</head>
+<body>
+
+    <h1>Principe</h1>
+
+    <div id="geometry"></div>
+
+
+    <script type="text/javascript">
+        L.Icon.Default.imagePath = "../dist/images" ;
+
+        $(document).ready(function(){
+            $('#geometry').geometryEditor({
+                height: 400,
+                hide: false,
+                editable: true,
+                lon: 2.5337,
+                lat: 48.8475,
+                zoom: 11
+            });
+        });
+    </script>
+</body>
+</html>
