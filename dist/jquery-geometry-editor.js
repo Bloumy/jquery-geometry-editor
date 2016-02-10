@@ -9835,8 +9835,14 @@ return jQuery;
 
 var guid = require('./util/guid.js');
 
-var GeometryEditor = function(inputElement,options){
-    this.inputElement = inputElement ;
+var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
+var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
+
+/**
+ * GeometryEditor component creates a map synchronized with an input element.
+ */
+var GeometryEditor = function(dataElement,options){
+    this.dataElement = dataElement ;
     this.settings = $.extend({
         tileLayers: [
            {
@@ -9880,7 +9886,7 @@ GeometryEditor.prototype.initMap = function(){
     $mapDiv.addClass('map');
     $mapDiv.css('width', this.settings.width) ;
     $mapDiv.css('height', this.settings.height) ;
-    $mapDiv.insertAfter(this.inputElement);
+    $mapDiv.insertAfter(this.dataElement);
 
     // create leaflet map
     var map = L.map(mapId).setView(
@@ -9899,34 +9905,50 @@ GeometryEditor.prototype.initMap = function(){
     return map ;
 } ;
 
-
-GeometryEditor.prototype.getInputData = function(){
-    if ( typeof this.inputElement.attr('value') !== 'undefined' ){
-        return $.trim( this.inputElement.val() ) ;
-    }else{
-        return $.trim( this.inputElement.html() ) ;
-    }
+/**
+ * Indicates if data element is an input field (<input>, <textarea>, etc.)
+ */
+GeometryEditor.prototype.isDataElementAnInput = function(){
+    return typeof this.dataElement.attr('value') !== 'undefined' ;
 } ;
 
-GeometryEditor.prototype.setInputData = function(value){
-    if ( typeof this.inputElement.attr('value') !== 'undefined' ){
-        this.inputElement.val(value) ;
+/**
+ * Get raw data from the dataElement
+ */
+GeometryEditor.prototype.getRawData = function(){
+    if ( this.isDataElementAnInput() ){
+        return $.trim( this.dataElement.val() ) ;
     }else{
-        this.inputElement.html(value) ;
+        return $.trim( this.dataElement.html() ) ;
     }
 } ;
 
 /**
- * Init map from inputElement data
+ * Set raw data to the dataElement
+ */
+GeometryEditor.prototype.setRawData = function(value){
+    if ( this.isDataElementAnInput() ){
+        this.dataElement.val(value) ;
+    }else{
+        this.dataElement.html(value) ;
+    }
+} ;
+
+/**
+ * Init map from dataElement data
  */
 GeometryEditor.prototype.initFeatures = function(){
-    var drawnItems = new L.FeatureGroup();
-    this.map.addLayer(drawnItems);
+    var drawnItems = L.featureGroup().addTo(this.map);
 
-    var data = this.getInputData();
+    var data = this.getRawData();
     if ( data !== '' ){
-        L.geoJson(JSON.parse(data),{
+        var geometry = JSON.parse(data);
+        var geometries = geometryToSimpleGeometries(geometry);
+        console.log(geometries);
+
+        L.geoJson(geometries,{
             onEachFeature: function(feature, layer) {
+                console.log(layer);
                 drawnItems.addLayer(layer);
                 layer.on('click',
                     function(e){
@@ -9939,7 +9961,6 @@ GeometryEditor.prototype.initFeatures = function(){
                 );
             }
         }) ;
-        //drawnItems.addData(featureCollection);
         this.map.fitBounds(drawnItems.getBounds());
     }
     return drawnItems ;
@@ -9952,10 +9973,13 @@ GeometryEditor.prototype.initFeatures = function(){
  */
 GeometryEditor.prototype.initDrawControls = function(){
     var drawOptions = {
-        polyline: true,
-        polygon: true,
-        rectangle: true,
-        circle: true,
+        draw: {
+            position: 'topleft',
+            polyline: true,
+            polygon: true,
+            rectangle: true,
+            circle: false
+        },
         edit: {
             featureGroup: this.drawnItems
         }
@@ -9985,15 +10009,50 @@ GeometryEditor.prototype.initDrawControls = function(){
  */
 GeometryEditor.prototype.serializeGeometry = function(){
     var featureCollection = this.drawnItems.toGeoJSON() ;
-    var geometry = this.featureCollectionToGeometry(featureCollection);
-    this.setInputData(JSON.stringify(geometry));
+    var geometry = featureCollectionToGeometry(featureCollection);
+    this.setRawData(JSON.stringify(geometry));
 } ;
 
 
+
+
+module.exports = GeometryEditor ;
+
+},{"./util/featureCollectionToGeometry.js":5,"./util/geometryToSimpleGeometries":7,"./util/guid.js":8}],3:[function(require,module,exports){
+var ge = {
+    GeometryEditor: require('./GeometryEditor')
+} ;
+
+if ( typeof window !== 'undefined' ){
+    window.ge = ge ;
+}else{
+    module.exports = ge ;
+}
+
+},{"./GeometryEditor":2}],4:[function(require,module,exports){
+var jQuery = window.jQuery || require('jquery');
+
+(function($) {
+
+	var GeometryEditor = require('./GeometryEditor');
+
+	$.fn.geometryEditor = function( options ){
+		return this.each(function() {
+			var editor = new GeometryEditor($(this),options);
+			$(this).data('editor',editor);
+		});
+	} ;
+
+})(jQuery);
+
+},{"./GeometryEditor":2,"jquery":1}],5:[function(require,module,exports){
+
+var geometriesToCollection = require('./geometriesToCollection.js') ;
+
 /**
- * Converts FeatureCollection to normalized geometry
+ * Converts FeatureCollection to a normalized geometry
  */
-GeometryEditor.prototype.featureCollectionToGeometry = function(featureCollection){
+var featureCollectionToGeometry = function(featureCollection){
     var geometries = [] ;
     featureCollection.features.forEach(function(feature){
         geometries.push( feature.geometry ) ;
@@ -10001,15 +10060,19 @@ GeometryEditor.prototype.featureCollectionToGeometry = function(featureCollectio
     if ( geometries.length <= 1 ){
         return geometries[0];
     }else{
-        return this.geometriesToCollection(geometries) ;
+        return geometriesToCollection(geometries) ;
     }
 } ;
 
+module.exports = featureCollectionToGeometry ;
+
+},{"./geometriesToCollection.js":6}],6:[function(require,module,exports){
+
 /**
  * Converts an array of geometries to a collection (MultiPoint, MultiLineString,
- * MultiPolygon, GeometryCollection)
+ * MultiPolygon, GeometryCollection).
  */
-GeometryEditor.prototype.geometriesToCollection = function(geometries){
+var geometriesToCollection = function(geometries){
     // count by geometry type
     var counts = {};
     geometries.forEach(function(geometry){
@@ -10039,37 +10102,70 @@ GeometryEditor.prototype.geometriesToCollection = function(geometries){
     }
 } ;
 
+module.exports = geometriesToCollection ;
 
-module.exports = GeometryEditor ;
+},{}],7:[function(require,module,exports){
 
-},{"./util/guid.js":5}],3:[function(require,module,exports){
-var ge = {
-    GeometryEditor: require('./GeometryEditor')
+/**
+ * Converts a multi-geometry to an array of geometries
+ * @param {MultiPoint|MultiPolygon|MultiLineString} multi-geometry
+ * @returns {Geometry[]} simple geometries
+ */
+var multiToGeometries = function(multiGeometry){
+    var geometries = [] ;
+
+    var simpleType = multiGeometry.type.substring("Multi".length) ;
+    multiGeometry.coordinates.forEach(function(subCoordinates){
+        geometries.push(
+            {
+                "type": simpleType,
+                "coordinates": subCoordinates
+            }
+        );
+    });
+
+    return geometries ;
 } ;
 
-if ( typeof window !== 'undefined' ){
-    window.ge = ge ;
-}else{
-    module.exports = ge ;
-}
+/**
+ * Converts a geometry collection to an array of geometries
+ * @param {GeometryCollection} geometry collection
+ * @returns {Geometry[]} simple geometries
+ */
+var geometryCollectionToGeometries = function(geometryCollection){
+    var geometries = [] ;
+    geometryCollection.geometries.forEach(function(geometry){
+        geometries.push(geometry);
+    });
+    return geometries ;
+} ;
 
-},{"./GeometryEditor":2}],4:[function(require,module,exports){
-var jQuery = window.jQuery || require('jquery');
 
-(function($) {
+/**
+ *
+ * @param {Geometry} geometry
+ * @returns {Geometry[]} simple geometries
+ */
+var geometryToSimpleGeometries = function(geometry){
+    switch (geometry.type){
+    case "Point":
+    case "LineString":
+    case "Polygon":
+        return [geometry];
+    case "MultiPoint":
+    case "MultiLineString":
+    case "MultiPolygon":
+        return multiToGeometries(geometry);
+    case "GeometryCollection":
+        return geometryCollectionToGeometries(geometry);
+    default:
+        throw "unsupported geometry type : "+geometry.type;
+    }
+} ;
 
-	var GeometryEditor = require('./GeometryEditor');
+module.exports = geometryToSimpleGeometries ;
 
-	$.fn.geometryEditor = function( options ){
-		return this.each(function() {
-			var editor = new GeometryEditor($(this),options);
-			$(this).data('editor',editor);
-		});
-	} ;
-
-})(jQuery);
-
-},{"./GeometryEditor":2,"jquery":1}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 /**
  * Generates uuidv4
@@ -10086,4 +10182,4 @@ var guid = function() {
 
 module.exports = guid ;
 
-},{}]},{},[2,3,4,5]);
+},{}]},{},[2,3,4,5,6,7,8]);

@@ -1,8 +1,14 @@
 
 var guid = require('./util/guid.js');
 
-var GeometryEditor = function(inputElement,options){
-    this.inputElement = inputElement ;
+var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
+var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
+
+/**
+ * GeometryEditor component creates a map synchronized with an input element.
+ */
+var GeometryEditor = function(dataElement,options){
+    this.dataElement = dataElement ;
     this.settings = $.extend({
         tileLayers: [
            {
@@ -46,7 +52,7 @@ GeometryEditor.prototype.initMap = function(){
     $mapDiv.addClass('map');
     $mapDiv.css('width', this.settings.width) ;
     $mapDiv.css('height', this.settings.height) ;
-    $mapDiv.insertAfter(this.inputElement);
+    $mapDiv.insertAfter(this.dataElement);
 
     // create leaflet map
     var map = L.map(mapId).setView(
@@ -65,34 +71,50 @@ GeometryEditor.prototype.initMap = function(){
     return map ;
 } ;
 
-
-GeometryEditor.prototype.getInputData = function(){
-    if ( typeof this.inputElement.attr('value') !== 'undefined' ){
-        return $.trim( this.inputElement.val() ) ;
-    }else{
-        return $.trim( this.inputElement.html() ) ;
-    }
+/**
+ * Indicates if data element is an input field (<input>, <textarea>, etc.)
+ */
+GeometryEditor.prototype.isDataElementAnInput = function(){
+    return typeof this.dataElement.attr('value') !== 'undefined' ;
 } ;
 
-GeometryEditor.prototype.setInputData = function(value){
-    if ( typeof this.inputElement.attr('value') !== 'undefined' ){
-        this.inputElement.val(value) ;
+/**
+ * Get raw data from the dataElement
+ */
+GeometryEditor.prototype.getRawData = function(){
+    if ( this.isDataElementAnInput() ){
+        return $.trim( this.dataElement.val() ) ;
     }else{
-        this.inputElement.html(value) ;
+        return $.trim( this.dataElement.html() ) ;
     }
 } ;
 
 /**
- * Init map from inputElement data
+ * Set raw data to the dataElement
+ */
+GeometryEditor.prototype.setRawData = function(value){
+    if ( this.isDataElementAnInput() ){
+        this.dataElement.val(value) ;
+    }else{
+        this.dataElement.html(value) ;
+    }
+} ;
+
+/**
+ * Init map from dataElement data
  */
 GeometryEditor.prototype.initFeatures = function(){
-    var drawnItems = new L.FeatureGroup();
-    this.map.addLayer(drawnItems);
+    var drawnItems = L.featureGroup().addTo(this.map);
 
-    var data = this.getInputData();
+    var data = this.getRawData();
     if ( data !== '' ){
-        L.geoJson(JSON.parse(data),{
+        var geometry = JSON.parse(data);
+        var geometries = geometryToSimpleGeometries(geometry);
+        console.log(geometries);
+
+        L.geoJson(geometries,{
             onEachFeature: function(feature, layer) {
+                console.log(layer);
                 drawnItems.addLayer(layer);
                 layer.on('click',
                     function(e){
@@ -105,7 +127,6 @@ GeometryEditor.prototype.initFeatures = function(){
                 );
             }
         }) ;
-        //drawnItems.addData(featureCollection);
         this.map.fitBounds(drawnItems.getBounds());
     }
     return drawnItems ;
@@ -118,10 +139,13 @@ GeometryEditor.prototype.initFeatures = function(){
  */
 GeometryEditor.prototype.initDrawControls = function(){
     var drawOptions = {
-        polyline: true,
-        polygon: true,
-        rectangle: true,
-        circle: true,
+        draw: {
+            position: 'topleft',
+            polyline: true,
+            polygon: true,
+            rectangle: true,
+            circle: false
+        },
         edit: {
             featureGroup: this.drawnItems
         }
@@ -151,59 +175,11 @@ GeometryEditor.prototype.initDrawControls = function(){
  */
 GeometryEditor.prototype.serializeGeometry = function(){
     var featureCollection = this.drawnItems.toGeoJSON() ;
-    var geometry = this.featureCollectionToGeometry(featureCollection);
-    this.setInputData(JSON.stringify(geometry));
+    var geometry = featureCollectionToGeometry(featureCollection);
+    this.setRawData(JSON.stringify(geometry));
 } ;
 
 
-/**
- * Converts FeatureCollection to normalized geometry
- */
-GeometryEditor.prototype.featureCollectionToGeometry = function(featureCollection){
-    var geometries = [] ;
-    featureCollection.features.forEach(function(feature){
-        geometries.push( feature.geometry ) ;
-    });
-    if ( geometries.length <= 1 ){
-        return geometries[0];
-    }else{
-        return this.geometriesToCollection(geometries) ;
-    }
-} ;
-
-/**
- * Converts an array of geometries to a collection (MultiPoint, MultiLineString,
- * MultiPolygon, GeometryCollection)
- */
-GeometryEditor.prototype.geometriesToCollection = function(geometries){
-    // count by geometry type
-    var counts = {};
-    geometries.forEach(function(geometry){
-        if ( typeof counts[geometry.type] === 'undefined' ){
-            counts[geometry.type] = 1 ;
-        }else{
-            counts[geometry.type]++ ;
-        }
-    }) ;
-
-    var geometryTypes = Object.keys(counts) ;
-    if ( geometryTypes.length > 1 ){
-        return {
-            "type": "GeometryCollection",
-            "geometries": geometries
-        } ;
-    }else{
-        var multiType = "Multi"+Object.keys(counts)[0] ;
-        var coordinates = [];
-        geometries.forEach(function(geometry){
-            coordinates.push(geometry.coordinates);
-        }) ;
-        return {
-            "type": multiType,
-            "coordinates": coordinates
-        } ;
-    }
-} ;
 
 
 module.exports = GeometryEditor ;
