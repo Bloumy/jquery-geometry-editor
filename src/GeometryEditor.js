@@ -4,6 +4,8 @@ var guid = require('./util/guid.js');
 var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
 
+var isMultiple = require('./geometryType/isMultiple.js') ;
+
 /**
  * GeometryEditor component creates a map synchronized with an input element.
  */
@@ -25,7 +27,8 @@ var GeometryEditor = function(dataElement,options){
         height: '500',
         lon: 45.0,
         lat: 2.0,
-        zoom: 4
+        zoom: 4,
+        geometryType: 'Geometry'
     }, options );
 
     // init map
@@ -145,6 +148,33 @@ GeometryEditor.prototype.initDrawLayer = function(){
     }
 } ;
 
+/**
+ * Get output geometry type
+ * @returns {String}
+ */
+GeometryEditor.prototype.getGeometryType = function(){
+    return this.settings.geometryType ;
+} ;
+
+/**
+ * Indicates if geometryType allows LineString
+ * @param {String} Point|LineString|Polygon
+ * @return {boolean}
+ */
+GeometryEditor.prototype.canEdit = function(geometryType){
+    if ( this.getGeometryType() === "Geometry" ){
+        return true ;
+    }
+    if ( this.getGeometryType() === "GeometryCollection" ){
+        return true ;
+    }
+    if ( this.getGeometryType().indexOf(geometryType) !== -1 ){
+        return true ;
+    }
+    return false;
+} ;
+
+
 
 /**
  * Init draw controls
@@ -154,9 +184,10 @@ GeometryEditor.prototype.initDrawControls = function(){
     var drawOptions = {
         draw: {
             position: 'topleft',
-            polyline: true,
-            polygon: true,
-            rectangle: true,
+            marker: this.canEdit("Point"),
+            polyline: this.canEdit("LineString"),
+            polygon: this.canEdit("Polygon"),
+            rectangle: this.canEdit("Polygon"),
             circle: false
         },
         edit: {
@@ -169,6 +200,9 @@ GeometryEditor.prototype.initDrawControls = function(){
 
     var self = this ;
     this.map.on('draw:created', function(e) {
+        if ( ! isMultiple( self.getGeometryType() ) ){
+            self.drawLayer.clearLayers();
+        }
         self.drawLayer.addLayer(e.layer);
         self.serializeGeometry();
     });

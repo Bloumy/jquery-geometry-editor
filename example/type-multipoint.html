@@ -18,7 +18,7 @@
 </head>
 <body>
 
-    <h1>Restriction to a geometry type (Point)</h1>
+    <h1>Restriction to a geometry type (MultiPoint)</h1>
 
     <form target="#" method="get" style="width: 100%;">
         <label for="geometry">Position (cachée par défaut, modifiée lorsque la carte est modifiée) </label><br />
@@ -35,7 +35,7 @@
                 height: 400,
                 hide: false,
                 editable: true,
-                type: 'Point'
+                geometryType: 'MultiPoint'
             });
         });
     </script>

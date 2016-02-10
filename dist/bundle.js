@@ -9858,6 +9858,8 @@ var guid = require('./util/guid.js');
 var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
 
+var isMultiple = require('./geometryType/isMultiple.js') ;
+
 /**
  * GeometryEditor component creates a map synchronized with an input element.
  */
@@ -9879,7 +9881,8 @@ var GeometryEditor = function(dataElement,options){
         height: '500',
         lon: 45.0,
         lat: 2.0,
-        zoom: 4
+        zoom: 4,
+        geometryType: 'Geometry'
     }, options );
 
     // init map
@@ -9999,6 +10002,33 @@ GeometryEditor.prototype.initDrawLayer = function(){
     }
 } ;
 
+/**
+ * Get output geometry type
+ * @returns {String}
+ */
+GeometryEditor.prototype.getGeometryType = function(){
+    return this.settings.geometryType ;
+} ;
+
+/**
+ * Indicates if geometryType allows LineString
+ * @param {String} Point|LineString|Polygon
+ * @return {boolean}
+ */
+GeometryEditor.prototype.canEdit = function(geometryType){
+    if ( this.getGeometryType() === "Geometry" ){
+        return true ;
+    }
+    if ( this.getGeometryType() === "GeometryCollection" ){
+        return true ;
+    }
+    if ( this.getGeometryType().indexOf(geometryType) !== -1 ){
+        return true ;
+    }
+    return false;
+} ;
+
+
 
 /**
  * Init draw controls
@@ -10008,9 +10038,10 @@ GeometryEditor.prototype.initDrawControls = function(){
     var drawOptions = {
         draw: {
             position: 'topleft',
-            polyline: true,
-            polygon: true,
-            rectangle: true,
+            marker: this.canEdit("Point"),
+            polyline: this.canEdit("LineString"),
+            polygon: this.canEdit("Polygon"),
+            rectangle: this.canEdit("Polygon"),
             circle: false
         },
         edit: {
@@ -10023,6 +10054,9 @@ GeometryEditor.prototype.initDrawControls = function(){
 
     var self = this ;
     this.map.on('draw:created', function(e) {
+        if ( ! isMultiple( self.getGeometryType() ) ){
+            self.drawLayer.clearLayers();
+        }
         self.drawLayer.addLayer(e.layer);
         self.serializeGeometry();
     });
@@ -10051,7 +10085,18 @@ GeometryEditor.prototype.serializeGeometry = function(){
 
 module.exports = GeometryEditor ;
 
-},{"./util/featureCollectionToGeometry.js":5,"./util/geometryToSimpleGeometries":7,"./util/guid.js":8}],3:[function(require,module,exports){
+},{"./geometryType/isMultiple.js":3,"./util/featureCollectionToGeometry.js":6,"./util/geometryToSimpleGeometries":8,"./util/guid.js":9}],3:[function(require,module,exports){
+
+/**
+ * Indicates if the given type corresponds to a mutli geometry
+ */
+var isMultiple = function(geometryType) {
+    return geometryType.startsWith("Multi") || (geometryType === "GeometryCollection");
+};
+
+module.exports = isMultiple ;
+
+},{}],4:[function(require,module,exports){
 var ge = {
     GeometryEditor: require('./GeometryEditor')
 } ;
@@ -10062,7 +10107,7 @@ if ( typeof window !== 'undefined' ){
     module.exports = ge ;
 }
 
-},{"./GeometryEditor":2}],4:[function(require,module,exports){
+},{"./GeometryEditor":2}],5:[function(require,module,exports){
 var jQuery = window.jQuery || require('jquery');
 
 (function($) {
@@ -10078,7 +10123,7 @@ var jQuery = window.jQuery || require('jquery');
 
 })(jQuery);
 
-},{"./GeometryEditor":2,"jquery":1}],5:[function(require,module,exports){
+},{"./GeometryEditor":2,"jquery":1}],6:[function(require,module,exports){
 
 var geometriesToCollection = require('./geometriesToCollection.js') ;
 
@@ -10099,7 +10144,7 @@ var featureCollectionToGeometry = function(featureCollection){
 
 module.exports = featureCollectionToGeometry ;
 
-},{"./geometriesToCollection.js":6}],6:[function(require,module,exports){
+},{"./geometriesToCollection.js":7}],7:[function(require,module,exports){
 
 /**
  * Converts an array of geometries to a collection (MultiPoint, MultiLineString,
@@ -10137,7 +10182,7 @@ var geometriesToCollection = function(geometries){
 
 module.exports = geometriesToCollection ;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 /**
  * Converts a multi-geometry to an array of geometries
@@ -10198,7 +10243,7 @@ var geometryToSimpleGeometries = function(geometry){
 
 module.exports = geometryToSimpleGeometries ;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 /**
  * Generates uuidv4
@@ -10215,4 +10260,4 @@ var guid = function() {
 
 module.exports = guid ;
 
-},{}]},{},[2,3,4,5,6,7,8]);
+},{}]},{},[2,3,4,5,6,7,8,9]);

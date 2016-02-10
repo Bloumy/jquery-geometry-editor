@@ -50,15 +50,37 @@ The map height
 
 * editable (boolean)
 
+* Option "geometryType" (enum)
+
+Type provides a restriction on geometry edition and supports the following values :
+
+* Geometry : Any geometry type
+* Point
+* LineString
+* Polygon
+* MultiPolygon
+* MultiLineString
+* MultiPolygon
+* GeometryCollection (default) : all geometries are supported
+
+Note that :
+* Adding geometries leads to replacement for single geometries (Point, LineString, Polygon)
+
+
 ## TODO
+
+### Bugs
+
+* Input geometries are not filtered according to geometryType
+* Output geometries are not fully normalized according to geometryType
 
 ### Features
 
-* Option "type" (enum)
-
-Point|LineString|Polygon|MultiPolygon|MultiLineString|MultiPolygon|GeometryCollection)
-
 Restrict edition to the given type.
+
+* Options "format"
+
+GeoJSON (default)|WKT (easier to integrate with PostGIS).
 
 ### Clear and test code
 
