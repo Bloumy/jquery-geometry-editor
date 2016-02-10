@@ -9875,6 +9875,11 @@ var GeometryEditor = function(dataElement,options){
     if ( this.settings.editable ){
         this.initDrawControls();
     }
+
+    // hide data
+    if ( this.settings.hide ){
+        this.dataElement.hide();
+    }
 } ;
 
 
@@ -9949,6 +9954,8 @@ GeometryEditor.prototype.setGeometry = function(geometry){
 
     var self = this ;
     L.geoJson(geometries,{
+        // TODO avoid hacks for leaflet editing...
+        // https://github.com/Leaflet/Leaflet.draw/issues/364
         onEachFeature: function(feature, layer) {
             self.drawLayer.addLayer(layer);
             layer.on('click',
