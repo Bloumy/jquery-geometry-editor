@@ -1,6 +1,6 @@
 // TODO UMD
 
-var jQuery = window.jQuery || require('jquery');
+var jQuery = window.jQuery || require('jquery');
 
 (function($) {
 

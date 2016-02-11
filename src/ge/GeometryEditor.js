@@ -162,7 +162,7 @@ GeometryEditor.prototype.canEdit = function(geometryType){
  */
 GeometryEditor.prototype.initDrawControls = function(){
     var drawOptions = {
-        draw: {
+        draw: {
             position: 'topleft',
             marker: this.canEdit("Point"),
             polyline: this.canEdit("LineString"),

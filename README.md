@@ -9,7 +9,7 @@
 
 Exemples use either [OSM tiles](http://www.openstreetmap.org/copyright) or [IGN geoportal](http://www.geoportail.gouv.fr) (see [Conditions énérales](http://api.ign.fr/conditions-generales)) (French).
 
-## Motivation
+## Motivation
 
 When a date is needed is an HTML form, we simply pick a [Datepicker](https://jqueryui.com/datepicker/). When it's a shape : We write GeoJSON REST APIs and code client based on leaflet, openlayers, etc.
 
@@ -74,7 +74,7 @@ See [example/customize-geoportal.js](example/customize-geoportal.js) for a globa
 
 ## GeometryEditor options
 
-### Basic options
+### Basic options
 
 #### width (string|number)
 

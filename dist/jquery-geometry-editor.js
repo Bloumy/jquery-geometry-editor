@@ -9996,7 +9996,7 @@ GeometryEditor.prototype.canEdit = function(geometryType){
  */
 GeometryEditor.prototype.initDrawControls = function(){
     var drawOptions = {
-        draw: {
+        draw: {
             position: 'topleft',
             marker: this.canEdit("Point"),
             polyline: this.canEdit("LineString"),
@@ -10247,7 +10247,7 @@ if ( typeof window !== 'undefined' ){
 },{"./ge/GeometryEditor":2,"./ge/defaultParams":3}],10:[function(require,module,exports){
 // TODO UMD
 
-var jQuery = window.jQuery || require('jquery');
+var jQuery = window.jQuery || require('jquery');
 
 (function($) {
 
