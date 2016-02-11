@@ -1,5 +1,6 @@
 var ge = {
-    GeometryEditor: require('./GeometryEditor')
+    defaultParams: require('./ge/defaultParams'),
+    GeometryEditor: require('./ge/GeometryEditor')
 } ;
 
 if ( typeof window !== 'undefined' ){

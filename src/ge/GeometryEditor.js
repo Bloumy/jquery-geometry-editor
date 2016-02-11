@@ -1,6 +1,7 @@
 
 var guid = require('./util/guid.js');
 
+var defaultParams = require('./defaultParams.js') ;
 var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
 
@@ -11,25 +12,7 @@ var isSingleGeometryType = require('./geometryType/isSingleGeometryType.js') ;
  */
 var GeometryEditor = function(dataElement,options){
     this.dataElement = dataElement ;
-    this.settings = $.extend({
-        tileLayers: [
-           {
-               url: "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-               attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
-           }
-        ],
-        /*
-         * display or hide corresponding form item
-         */
-        hide: true,
-        editable: true,
-        width: '100%',
-        height: '500',
-        lon: 45.0,
-        lat: 2.0,
-        zoom: 4,
-        geometryType: 'Geometry'
-    }, options );
+    this.settings = $.extend(defaultParams, options );
 
     // init map
     this.map = this.initMap();

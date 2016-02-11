@@ -9855,6 +9855,7 @@ return jQuery;
 
 var guid = require('./util/guid.js');
 
+var defaultParams = require('./defaultParams.js') ;
 var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
 
@@ -9865,25 +9866,7 @@ var isSingleGeometryType = require('./geometryType/isSingleGeometryType.js') ;
  */
 var GeometryEditor = function(dataElement,options){
     this.dataElement = dataElement ;
-    this.settings = $.extend({
-        tileLayers: [
-           {
-               url: "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-               attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
-           }
-        ],
-        /*
-         * display or hide corresponding form item
-         */
-        hide: true,
-        editable: true,
-        width: '100%',
-        height: '500',
-        lon: 45.0,
-        lat: 2.0,
-        zoom: 4,
-        geometryType: 'Geometry'
-    }, options );
+    this.settings = $.extend(defaultParams, options );
 
     // init map
     this.map = this.initMap();
@@ -10086,46 +10069,45 @@ GeometryEditor.prototype.serializeGeometry = function(){
 
 module.exports = GeometryEditor ;
 
-},{"./geometryType/isSingleGeometryType.js":3,"./util/featureCollectionToGeometry.js":6,"./util/geometryToSimpleGeometries":8,"./util/guid.js":9}],3:[function(require,module,exports){
+},{"./defaultParams.js":3,"./geometryType/isSingleGeometryType.js":4,"./util/featureCollectionToGeometry.js":5,"./util/geometryToSimpleGeometries":7,"./util/guid.js":8}],3:[function(require,module,exports){
+
+/**
+ * Default GeometryEditor parameters
+ */
+var defaultParams = {
+    tileLayers: [
+       {
+           url: "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+           attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+       }
+    ],
+    /*
+     * display or hide corresponding form item
+     */
+    hide: true,
+    editable: true,
+    width: '100%',
+    height: '500',
+    lon: 2.0,
+    lat: 45.0,
+    zoom: 4,
+    geometryType: 'Geometry'
+} ;
+
+module.exports = defaultParams ;
+
+},{}],4:[function(require,module,exports){
 
 /**
  * Indicates if the given type corresponds to a mutli geometry
  */
 var isSingleGeometryType = function(geometryType) {
-    console.log(geometryType);
     return ["Point","LineString","Polygon"].indexOf(geometryType) !== -1 ;
 };
 
 module.exports = isSingleGeometryType ;
 
-},{}],4:[function(require,module,exports){
-var ge = {
-    GeometryEditor: require('./GeometryEditor')
-} ;
-
-if ( typeof window !== 'undefined' ){
-    window.ge = ge ;
-}else{
-    module.exports = ge ;
-}
-
-},{"./GeometryEditor":2}],5:[function(require,module,exports){
-var jQuery = window.jQuery || require('jquery');
-
-(function($) {
-
-	var GeometryEditor = require('./GeometryEditor');
-
-	$.fn.geometryEditor = function( options ){
-		return this.each(function() {
-			var editor = new GeometryEditor($(this),options);
-			$(this).data('editor',editor);
-		});
-	} ;
-
-})(jQuery);
-
-},{"./GeometryEditor":2,"jquery":1}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 
 var geometriesToCollection = require('./geometriesToCollection.js') ;
 
@@ -10151,7 +10133,7 @@ var featureCollectionToGeometry = function(featureCollection){
 
 module.exports = featureCollectionToGeometry ;
 
-},{"./geometriesToCollection.js":7}],7:[function(require,module,exports){
+},{"./geometriesToCollection.js":6}],6:[function(require,module,exports){
 
 /**
  * Converts an array of geometries to a collection (MultiPoint, MultiLineString,
@@ -10189,7 +10171,7 @@ var geometriesToCollection = function(geometries){
 
 module.exports = geometriesToCollection ;
 
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 
 /**
  * Converts a multi-geometry to an array of geometries
@@ -10253,7 +10235,7 @@ var geometryToSimpleGeometries = function(geometry){
 
 module.exports = geometryToSimpleGeometries ;
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 /**
  * Generates uuidv4
@@ -10270,4 +10252,34 @@ var guid = function() {
 
 module.exports = guid ;
 
-},{}]},{},[2,3,4,5,6,7,8,9]);
+},{}],9:[function(require,module,exports){
+var ge = {
+    defaultParams: require('./ge/defaultParams'),
+    GeometryEditor: require('./ge/GeometryEditor')
+} ;
+
+if ( typeof window !== 'undefined' ){
+    window.ge = ge ;
+}else{
+    module.exports = ge ;
+}
+
+},{"./ge/GeometryEditor":2,"./ge/defaultParams":3}],10:[function(require,module,exports){
+// TODO UMD
+
+var jQuery = window.jQuery || require('jquery');
+
+(function($) {
+
+	var GeometryEditor = require('./ge/GeometryEditor');
+
+	$.fn.geometryEditor = function( options ){
+		return this.each(function() {
+			var editor = new GeometryEditor($(this),options);
+			$(this).data('editor',editor);
+		});
+	} ;
+
+})(jQuery);
+
+},{"./ge/GeometryEditor":2,"jquery":1}]},{},[2,3,4,5,6,7,8,9,10]);

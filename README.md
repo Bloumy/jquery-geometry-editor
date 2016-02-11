@@ -11,7 +11,7 @@ What about a new approach?
 ```
 <form>
     <!-- a form field -->
-    Place name : <input type="text" name="name" value="The name" />
+    Place : <input type="text" name="name" value="The name" />
     <!-- a serialized geometry -->
     Position : <textarea id="position" name="position"
     >
@@ -33,10 +33,9 @@ $('#position').geometryEditor({
 });
 ```
 
-* Get the form :
+* Result
 
-<input type="text" name="name" value="The name" />
-![Point example](doc/images/point.png)
+![Point example](doc/images/form-place.png)
 
 
 ## Dependencies
@@ -61,16 +60,53 @@ See :
 * [Basic example (bundle, i.e. built in dependencies)](example/basic.html)
 * [Basic example (external dependencies)](example/basic-without-bundle.html)
 
+## Global customization
 
-## Supported geometry types
+Default GeometryEditor parameters are exposed throw the variable ```ge.defaultParams``` :
 
+```
+ge.defaultParams.tileLayers = [
+    {
+        url: getGeoportalURL("GEOGRAPHICALGRIDSYSTEMS.PLANIGN"),
+        attribution: '<a href="#">IGN</a>'
+    }
+]
+```
+
+## GeometryEditor options
+
+### Basic options
+
+#### width (string|number)
+
+The map width (ex : '500', default '100%')
+
+#### height (string|number)
+
+The map height
+
+### Edit options
+
+#### editable (boolean)
+
+#### geometryType" (enum)
+
+This  provides a restriction on geometry edition :
+
+* Geometry (default) : Any geometry type
 * Point
 * LineString
 * Polygon
-* MultiPoint
+* MultiPolygon
 * MultiLineString
 * MultiPolygon
 * GeometryCollection
+
+![Geometry types](doc/images/geometry-types.png)
+
+Note that :
+* Adding geometries leads to replacement for single geometries (Point, LineString, Polygon)
+* Circle are disabled for a while
 
 ## Advanced use
 
@@ -83,49 +119,27 @@ The GeometryEditor is attached to the input field and can be retrieved :
 $('#geometry').data('editor')
 ```
 
-## GeometryEditor options
+### Use GeometryEditor component
 
-### Basic options
-
-* width (string|number)
-
-The map width (ex : '500', default '100%')
-
-* height (string|number)
-
-The map height
-
-### Edit options
-
-* editable (boolean)
-
-* Option "geometryType" (enum)
-
-Type provides a restriction on geometry edition and supports the following values :
-
-* Geometry : Any geometry type
-* Point
-* LineString
-* Polygon
-* MultiPolygon
-* MultiLineString
-* MultiPolygon
-* GeometryCollection (default) : all geometries are supported
-
-Note that :
-* Adding geometries leads to replacement for single geometries (Point, LineString, Polygon)
-
+```
+var geometryEditor = new GeometryEditor(
+    document.getElementById('position'),
+    {
+        geometryType: 'Point'
+    }  
+);
+```
 
 ## TODO
 
 ### Bugs
 
 * Input geometries are not filtered according to geometryType
-* Output geometries are not fully normalized according to geometryType
+* Output geometries are not fully normalized according to geometryType (Point instead of MultiPoint)
 
-### Features
+### Futures features
 
-Restrict edition to the given type.
+* Events to simplify customization (such as adding navigation control)
 
 * Options "format"
 

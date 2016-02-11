@@ -1,7 +1,7 @@
 {
   "name": "jquery-geometry-editor",
   "version": "0.0.0",
-  "description": "JQuery plugin that allows geometry edition",
+  "description": "JQuery plugin simplifing geometry edition",
   "main": "src/index.js",
   "directories": {
     "example": "example"

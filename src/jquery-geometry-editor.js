@@ -1,8 +1,10 @@
+// TODO UMD
+
 var jQuery = window.jQuery || require('jquery');
 
 (function($) {
 
-	var GeometryEditor = require('./GeometryEditor');
+	var GeometryEditor = require('./ge/GeometryEditor');
 
 	$.fn.geometryEditor = function( options ){
 		return this.each(function() {
