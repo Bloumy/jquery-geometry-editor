@@ -1,5 +1,14 @@
 # JQuery Geometry Editor
 
+## Dependencies
+
+* [JQuery](https://jquery.com/)
+* [leaflet](http://leafletjs.com/) : Open-source JavaScript library for mobile-friendly interactive maps
+* [leaflet-draw](https://github.com/Leaflet/Leaflet.draw) : Vector drawing and editing plugin for Leaflet
+* [leaflet-omnivore](https://github.com/mapbox/leaflet-omnivore) : Universal format parser for Leaflet & Mapbox.js
+
+Exemples use either [OSM tiles](http://www.openstreetmap.org/copyright) or [IGN geoportal](http://www.geoportail.gouv.fr) (see [Conditions énérales](http://api.ign.fr/conditions-generales)) (French).
+
 ## Motivation
 
 When a date is needed is an HTML form, we simply pick a [Datepicker](https://jqueryui.com/datepicker/). When it's a shape : We write GeoJSON REST APIs and code client based on leaflet, openlayers, etc.
@@ -38,16 +47,9 @@ $('#position').geometryEditor({
 ![Point example](doc/images/form-place.png)
 
 
-## Dependencies
-
-* [JQuery](https://jquery.com/)
-* [leaflet](http://leafletjs.com/) : Open-source JavaScript library for mobile-friendly interactive maps
-* [leaflet-draw](https://github.com/Leaflet/Leaflet.draw) : Vector drawing and editing plugin for Leaflet
-* [leaflet-omnivore](https://github.com/mapbox/leaflet-omnivore) : Universal format parser for Leaflet & Mapbox.js
-
 ## Viewer mode
 
-Controls can be disabled to get a geometry viewer :
+GeometryEditor acts as a geometry viewer when edition controls are disabled :
 
 ```
 $('#geometry').geometryEditor({
@@ -55,23 +57,20 @@ $('#geometry').geometryEditor({
 });
 ```
 
-See :
+## Examples
 
-* [Basic example (bundle, i.e. built in dependencies)](example/basic.html)
-* [Basic example (external dependencies)](example/basic-without-bundle.html)
+* [Simple example](example/basic.html)
+* [Simple example (with external dependencies)](example/basic-without-bundle.html)
 
-## Global customization
+* [Restriction to a Point](example/type-point.html)
+* [Restriction to a MultiPoint](example/type-multipoint.html)
+* [Supported restrictions (Point, LineString, Polygon, etc.)](example/full.html)
 
-Default GeometryEditor parameters are exposed throw the variable ```ge.defaultParams``` :
+* [Empty geometry](example/empty.html)
 
-```
-ge.defaultParams.tileLayers = [
-    {
-        url: getGeoportalURL("GEOGRAPHICALGRIDSYSTEMS.PLANIGN"),
-        attribution: '<a href="#">IGN</a>'
-    }
-]
-```
+* [Multiple maps in a page](example/multiple.html)
+
+See [example/customize-geoportal.js](example/customize-geoportal.js) for a global configuration example throw ```ge.defaultParams.tileLayers```.
 
 ## GeometryEditor options
 
@@ -108,7 +107,21 @@ Note that :
 * Adding geometries leads to replacement for single geometries (Point, LineString, Polygon)
 * Circle are disabled for a while
 
+## Global customization
+
+Default parameters are exposed throw the variable ```ge.defaultParams``` :
+
+```
+ge.defaultParams.tileLayers = [
+{
+    url: getGeoportalURL("GEOGRAPHICALGRIDSYSTEMS.PLANIGN"),
+    attribution: '<a href="#">IGN</a>'
+}
+]
+```
+
 ## Advanced use
+
 
 ### Retrieve the geometry editor
 
@@ -119,7 +132,9 @@ The GeometryEditor is attached to the input field and can be retrieved :
 $('#geometry').data('editor')
 ```
 
-### Use GeometryEditor component
+### GeometryEditor component
+
+WARNING : GeometryEditor interface is not yet really stable.
 
 ```
 var geometryEditor = new GeometryEditor(
@@ -130,6 +145,7 @@ var geometryEditor = new GeometryEditor(
 );
 ```
 
+
 ## TODO
 
 ### Bugs
@@ -137,10 +153,10 @@ var geometryEditor = new GeometryEditor(
 * Input geometries are not filtered according to geometryType
 * Output geometries are not fully normalized according to geometryType (Point instead of MultiPoint)
 
-### Futures features
+### Incoming features
 
+* Multiple tileLayers
 * Events to simplify customization (such as adding navigation control)
-
 * Options "format"
 
 GeoJSON (default)|WKT (easier to integrate with PostGIS).

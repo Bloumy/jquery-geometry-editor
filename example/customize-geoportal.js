@@ -22,7 +22,7 @@ if ( confirm("Display IGN maps?") ){
 	ge.defaultParams.tileLayers = [
 		{
 			url: getGeoportalURL("GEOGRAPHICALGRIDSYSTEMS.PLANIGN"),
-			attribution: '<a href="#">IGN</a>'
+			attribution: '<a href="http://api.ign.fr/conditions-generales">IGN</a>'
 		}
 	];
 }
