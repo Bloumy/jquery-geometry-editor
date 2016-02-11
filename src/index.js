@@ -1,27 +1,20 @@
-// TODO UMD
+// TODO check browserify usage (http://dontkry.com/posts/code/browserify-and-the-universal-module-definition.html)
+
+var jQuery = require('jquery');
 
 var ge = {
     defaultParams: require('./ge/defaultParams'),
     GeometryEditor: require('./ge/GeometryEditor')
 } ;
 
-if ( typeof window !== 'undefined' ){
-    window.ge = ge ;
-}else{
-    module.exports = ge ;
-}
+/**
+ * Expose jQuery plugin
+ */
+jQuery.fn.geometryEditor = function( options ){
+    return this.each(function() {
+        var editor = new ge.GeometryEditor($(this),options);
+        $(this).data('editor',editor);
+    });
+} ;
 
-var jQuery = window.jQuery || require('jquery');
-
-(function($) {
-
-	var GeometryEditor = require('./ge/GeometryEditor');
-
-	$.fn.geometryEditor = function( options ){
-		return this.each(function() {
-			var editor = new GeometryEditor($(this),options);
-			$(this).data('editor',editor);
-		});
-	} ;
-
-})(jQuery);
+global.ge = ge ;

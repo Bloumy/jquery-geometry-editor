@@ -135,9 +135,3 @@ var geometryEditor = new GeometryEditor(
 * Options "format"
 
 GeoJSON (default)|WKT (easier to integrate with PostGIS).
-
-### Clear and test code
-
-* Rely only on npm for the build
-* Test
-    * FeatureCollection to Geometry

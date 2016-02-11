@@ -31,6 +31,9 @@ module.exports = function(grunt) {
             dist: {
                 files: {
                     'dist/jquery-geometry-editor.js': ['src/**/*.js']
+                },
+                options: {
+                    transform: ['debowerify', 'decomponentify', 'deamdify', 'deglobalify'],
                 }
             }
         },
