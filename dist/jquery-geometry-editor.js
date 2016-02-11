@@ -10233,6 +10233,8 @@ var guid = function() {
 module.exports = guid ;
 
 },{}],9:[function(require,module,exports){
+// TODO UMD
+
 var ge = {
     defaultParams: require('./ge/defaultParams'),
     GeometryEditor: require('./ge/GeometryEditor')
@@ -10243,9 +10245,6 @@ if ( typeof window !== 'undefined' ){
 }else{
     module.exports = ge ;
 }
-
-},{"./ge/GeometryEditor":2,"./ge/defaultParams":3}],10:[function(require,module,exports){
-// TODO UMD
 
 var jQuery = window.jQuery || require('jquery');
 
@@ -10262,4 +10261,4 @@ var jQuery = window.jQuery || require('jquery');
 
 })(jQuery);
 
-},{"./ge/GeometryEditor":2,"jquery":1}]},{},[2,3,4,5,6,7,8,9,10]);
+},{"./ge/GeometryEditor":2,"./ge/defaultParams":3,"jquery":1}]},{},[2,3,4,5,6,7,8,9]);
