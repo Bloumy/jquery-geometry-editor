@@ -7,6 +7,9 @@ var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
 
 var isSingleGeometryType = require('./geometryType/isSingleGeometryType.js') ;
 
+var L = require('leaflet');
+var DrawControl = require('leaflet-draw');
+
 /**
  * GeometryEditor component creates a map synchronized with an input element.
  */
@@ -175,7 +178,7 @@ GeometryEditor.prototype.initDrawControls = function(){
         }
     } ;
 
-    var drawControl = new L.Control.Draw(drawOptions);
+    var drawControl = new DrawControl(drawOptions);
     this.map.addControl(drawControl);
 
     var self = this ;

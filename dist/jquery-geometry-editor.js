@@ -1,8 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-module.exports = function () {
-    return jQuery;
-}();
-},{}],2:[function(require,module,exports){
+(function (global){
 
 var guid = require('./util/guid.js');
 
@@ -11,6 +8,9 @@ var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
 
 var isSingleGeometryType = require('./geometryType/isSingleGeometryType.js') ;
+
+var L = (typeof window !== "undefined" ? window['L'] : typeof global !== "undefined" ? global['L'] : null);
+var DrawControl = (typeof window !== "undefined" ? window['L']['Control']['Draw'] : typeof global !== "undefined" ? global['L']['Control']['Draw'] : null);
 
 /**
  * GeometryEditor component creates a map synchronized with an input element.
@@ -180,7 +180,7 @@ GeometryEditor.prototype.initDrawControls = function(){
         }
     } ;
 
-    var drawControl = new L.Control.Draw(drawOptions);
+    var drawControl = new DrawControl(drawOptions);
     this.map.addControl(drawControl);
 
     var self = this ;
@@ -220,7 +220,8 @@ GeometryEditor.prototype.serializeGeometry = function(){
 
 module.exports = GeometryEditor ;
 
-},{"./defaultParams.js":3,"./geometryType/isSingleGeometryType.js":4,"./util/featureCollectionToGeometry.js":5,"./util/geometryToSimpleGeometries":7,"./util/guid.js":8}],3:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./defaultParams.js":2,"./geometryType/isSingleGeometryType.js":3,"./util/featureCollectionToGeometry.js":4,"./util/geometryToSimpleGeometries":6,"./util/guid.js":7}],2:[function(require,module,exports){
 
 /**
  * Default GeometryEditor parameters
@@ -247,7 +248,7 @@ var defaultParams = {
 
 module.exports = defaultParams ;
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 
 /**
  * Indicates if the given type corresponds to a mutli geometry
@@ -258,7 +259,7 @@ var isSingleGeometryType = function(geometryType) {
 
 module.exports = isSingleGeometryType ;
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 
 var geometriesToCollection = require('./geometriesToCollection.js') ;
 
@@ -284,7 +285,7 @@ var featureCollectionToGeometry = function(featureCollection){
 
 module.exports = featureCollectionToGeometry ;
 
-},{"./geometriesToCollection.js":6}],6:[function(require,module,exports){
+},{"./geometriesToCollection.js":5}],5:[function(require,module,exports){
 
 /**
  * Converts an array of geometries to a collection (MultiPoint, MultiLineString,
@@ -322,7 +323,7 @@ var geometriesToCollection = function(geometries){
 
 module.exports = geometriesToCollection ;
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 
 /**
  * Converts a multi-geometry to an array of geometries
@@ -386,7 +387,7 @@ var geometryToSimpleGeometries = function(geometry){
 
 module.exports = geometryToSimpleGeometries ;
 
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 
 /**
  * Generates uuidv4
@@ -403,9 +404,11 @@ var guid = function() {
 
 module.exports = guid ;
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
-var jQuery = require("./../bower_components/jquery/dist/jquery.js");
+// TODO check browserify usage (http://dontkry.com/posts/code/browserify-and-the-universal-module-definition.html)
+
+var jQuery = (typeof window !== "undefined" ? window['jQuery'] : typeof global !== "undefined" ? global['jQuery'] : null);
 
 var ge = {
     defaultParams: require('./ge/defaultParams'),
@@ -425,4 +428,4 @@ jQuery.fn.geometryEditor = function( options ){
 global.ge = ge ;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./../bower_components/jquery/dist/jquery.js":1,"./ge/GeometryEditor":2,"./ge/defaultParams":3}]},{},[2,3,4,5,6,7,8,9]);
+},{"./ge/GeometryEditor":1,"./ge/defaultParams":2}]},{},[8]);
