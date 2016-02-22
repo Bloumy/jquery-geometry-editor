@@ -414,6 +414,10 @@ GeometryEditor.prototype.getRawData = function() {
  * Set raw data to the dataElement
  */
 GeometryEditor.prototype.setRawData = function(value) {
+    var currentData = this.getRawData() ;
+    if ( currentData === value ){
+        return ;
+    }
     if (this.isDataElementAnInput()) {
         this.dataElement.val(value);
     } else {
@@ -426,6 +430,11 @@ GeometryEditor.prototype.setRawData = function(value) {
  * Set the geometry
  */
 GeometryEditor.prototype.setGeometry = function(geometry) {
+    // hack to accept bbox
+    if (geometry instanceof Array && geometry.length == 4 ){
+        geometry = bboxPolygon(geometry).geometry ;
+    }
+
     this.drawLayer.clearLayers();
     var geometries = geometryToSimpleGeometries(geometry);
 
@@ -448,18 +457,20 @@ GeometryEditor.prototype.setGeometry = function(geometry) {
  */
 GeometryEditor.prototype.initDrawLayer = function() {
     this.drawLayer = L.featureGroup().addTo(this.map);
+    this.updateDrawLayer();
+    this.dataElement.on('change',this.updateDrawLayer.bind(this));
+};
 
+/**
+ * Update draw layer from data
+ */
+GeometryEditor.prototype.updateDrawLayer = function(){
     var data = this.getRawData();
     if (data !== '') {
-        try {
-            var geometry = JSON.parse(data);
-            this.setGeometry(geometry);
-        } catch (e) {
-            var bbox = JSON.parse(data);
-            this.setGeometry(bboxPolygon(bbox).geometry);
-        }
+        var geometry = JSON.parse(data);
+        this.setGeometry(geometry);
     }
-};
+} ;
 
 /**
  * Get output geometry type
