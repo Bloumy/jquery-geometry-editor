@@ -16,9 +16,12 @@
   "author": "Mickaël Borne <mickael.borne@ign.fr>",
   "license": "BSD-2-Clause",
   "dependencies": {
+    "grunt-cli": "^0.1.13",
     "jquery": "^2.2.0",
     "leaflet": "^0.7.7",
-    "leaflet-draw": "^0.2.3"
+    "leaflet-draw": "^0.2.3",
+    "turf-bbox-polygon": "^1.0.2",
+    "turf-extent": "^1.0.4"
   },
   "devDependencies": {
     "browserify": "~13.0.0",
@@ -28,13 +31,12 @@
     "decomponentify": "~0.1.0",
     "deglobalify": "~0.2.0",
     "grunt": "^0.4.5",
-    "grunt-browserify": "^4.0.1",
+    "grunt-browserify": "~4.0.1",
     "grunt-contrib-concat": "^0.5.1",
     "grunt-contrib-jshint": "^0.12.0",
     "grunt-contrib-watch": "~0.6.1",
     "bootstrap": "^3.3.6",
     "grunt-contrib-copy": "~0.8.2",
-    "grunt-browserify": "~4.0.1",
     "grunt-contrib-uglify": "~0.11.1"
   },
   "browserify": {

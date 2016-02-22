@@ -21,7 +21,7 @@ $('#position').geometryEditor({
 * [JQuery](https://jquery.com/)
 * [leaflet](http://leafletjs.com/) : Open-source JavaScript library for mobile-friendly interactive maps
 * [leaflet-draw](https://github.com/Leaflet/Leaflet.draw) : Vector drawing and editing plugin for Leaflet
-* [leaflet-omnivore](https://github.com/mapbox/leaflet-omnivore) : Universal format parser for Leaflet & Mapbox.js
+* [TurfJS](https://github.com/Turfjs) : Geometry manipulation
 
 Exemples use either [OSM tiles](http://www.openstreetmap.org/copyright) or [IGN geoportal](http://www.geoportail.gouv.fr) (see [Conditions énérales](http://api.ign.fr/conditions-generales)) (French).
 
@@ -76,6 +76,7 @@ This  provides a restriction on geometry edition :
 * MultiLineString
 * MultiPolygon
 * GeometryCollection
+* Rectangle (bounding box)
 
 ![Geometry types](doc/images/geometry-types.png)
 
