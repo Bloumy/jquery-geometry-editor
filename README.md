@@ -173,6 +173,7 @@ Exemples use either [OSM tiles](http://www.openstreetmap.org/copyright) or [IGN 
 ### Behavior to improve
 
 * Input geometries are not filtered according to geometryType
+* Fit bounds only after initialization
 
 ### Future features
 

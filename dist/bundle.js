@@ -329,13 +329,13 @@ var extent = require('turf-extent');
 var defaultParams = require('./defaultParams.js');
 var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
-
-var isSingleGeometryType = require('./geometryType/isSingleGeometryType.js');
-
+var isSingleGeometryType = require('./util/isSingleGeometryType.js');
 
 
 /**
- * GeometryEditor component creates a map synchronized with an input element.
+ * GeometryEditor constructor from a dataElement containing a serialized geometry
+ * @param {Object} dataElement
+ * @param {Object} options
  */
 var GeometryEditor = function(dataElement, options) {
     this.dataElement = dataElement;
@@ -394,6 +394,7 @@ GeometryEditor.prototype.initMap = function() {
 
 /**
  * Indicates if data element is an input field (<input>, <textarea>, etc.)
+ * @private
  */
 GeometryEditor.prototype.isDataElementAnInput = function() {
     return typeof this.dataElement.attr('value') !== 'undefined';
@@ -401,6 +402,7 @@ GeometryEditor.prototype.isDataElementAnInput = function() {
 
 /**
  * Get raw data from the dataElement
+ * @returns {String}
  */
 GeometryEditor.prototype.getRawData = function() {
     if (this.isDataElementAnInput()) {
@@ -412,6 +414,7 @@ GeometryEditor.prototype.getRawData = function() {
 
 /**
  * Set raw data to the dataElement
+ * @param {String} value
  */
 GeometryEditor.prototype.setRawData = function(value) {
     var currentData = this.getRawData() ;
@@ -428,10 +431,11 @@ GeometryEditor.prototype.setRawData = function(value) {
 
 /**
  * Set the geometry
+ * @param {Array|Object} geometry either a GeoJSON geometry or a bounding box
  */
 GeometryEditor.prototype.setGeometry = function(geometry) {
     // hack to accept bbox
-    if (geometry instanceof Array && geometry.length == 4 ){
+    if (geometry instanceof Array && geometry.length === 4 ){
         geometry = bboxPolygon(geometry).geometry ;
     }
 
@@ -470,7 +474,7 @@ GeometryEditor.prototype.updateDrawLayer = function(){
         var geometry = JSON.parse(data);
         this.setGeometry(geometry);
     }
-} ;
+};
 
 /**
  * Get output geometry type
@@ -481,12 +485,12 @@ GeometryEditor.prototype.getGeometryType = function() {
 };
 
 /**
- * Indicates if geometryType allows LineString
- * @param {String} Point|LineString|Polygon
- * @return {boolean}
+ * Indicates if geometryType is allowed by restriction
+ * @param {type} geometryType
+ * @returns {Boolean}
  */
 GeometryEditor.prototype.canEdit = function(geometryType) {
-    if ( geometryType == "Rectangle" ){
+    if ( geometryType === "Rectangle" ){
         if ( this.getGeometryType().indexOf("Polygon") !== -1 ){
             return true ;
         }
@@ -509,6 +513,8 @@ GeometryEditor.prototype.canEdit = function(geometryType) {
 /**
  * Init draw controls
  * @see https://github.com/Leaflet/Leaflet.draw#disabling-a-toolbar-item
+ * 
+ * @private
  */
 GeometryEditor.prototype.initDrawControls = function() {
     var drawOptions = {
@@ -547,21 +553,22 @@ GeometryEditor.prototype.initDrawControls = function() {
 };
 
 
-
 /**
- * Serialize geometry to input field
+ * Serialize geometry to dataElement
+ * 
+ * @private
  */
 GeometryEditor.prototype.serializeGeometry = function() {
     var featureCollection = this.drawLayer.toGeoJSON();
     var geometry = featureCollectionToGeometry(featureCollection);
     if (geometry) {
-        if ( this.getGeometryType() == "Rectangle" ){
+        if ( this.getGeometryType() === 'Rectangle' ){
             this.setRawData( JSON.stringify( extent(geometry) ) );
         }else{
             this.setRawData( JSON.stringify(geometry) );
         }
     } else {
-        this.setRawData("");
+        this.setRawData('');
     }
 };
 
@@ -569,7 +576,7 @@ GeometryEditor.prototype.serializeGeometry = function() {
 module.exports = GeometryEditor;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./defaultParams.js":6,"./geometryType/isSingleGeometryType.js":7,"./util/featureCollectionToGeometry.js":8,"./util/geometryToSimpleGeometries":10,"./util/guid.js":11,"turf-bbox-polygon":1,"turf-extent":3}],6:[function(require,module,exports){
+},{"./defaultParams.js":6,"./util/featureCollectionToGeometry.js":7,"./util/geometryToSimpleGeometries":9,"./util/guid.js":10,"./util/isSingleGeometryType.js":11,"turf-bbox-polygon":1,"turf-extent":3}],6:[function(require,module,exports){
 
 /**
  * Default GeometryEditor parameters
@@ -598,18 +605,6 @@ module.exports = defaultParams ;
 
 },{}],7:[function(require,module,exports){
 
-/**
- * Indicates if the given type corresponds to a mutli geometry
- */
-var isSingleGeometryType = function(geometryType) {
-    console.log(geometryType);
-    return ["Point","LineString","Polygon","Rectangle"].indexOf(geometryType) !== -1 ;
-};
-
-module.exports = isSingleGeometryType ;
-
-},{}],8:[function(require,module,exports){
-
 var geometriesToCollection = require('./geometriesToCollection.js') ;
 
 /**
@@ -634,7 +629,7 @@ var featureCollectionToGeometry = function(featureCollection){
 
 module.exports = featureCollectionToGeometry ;
 
-},{"./geometriesToCollection.js":9}],9:[function(require,module,exports){
+},{"./geometriesToCollection.js":8}],8:[function(require,module,exports){
 
 /**
  * Converts an array of geometries to a collection (MultiPoint, MultiLineString,
@@ -672,7 +667,7 @@ var geometriesToCollection = function(geometries){
 
 module.exports = geometriesToCollection ;
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 /**
  * Converts a multi-geometry to an array of geometries
@@ -736,10 +731,11 @@ var geometryToSimpleGeometries = function(geometry){
 
 module.exports = geometryToSimpleGeometries ;
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 
 /**
  * Generates uuidv4
+ * @return {String} the generated uuid
  */
 var guid = function() {
     function s4() {
@@ -752,6 +748,18 @@ var guid = function() {
 } ;
 
 module.exports = guid ;
+
+},{}],11:[function(require,module,exports){
+
+/**
+ * Indicates if the given type corresponds to a mutli geometry
+ * @param {String} geometryType tested geometry type
+ */
+var isSingleGeometryType = function(geometryType) {
+    return ["Point","LineString","Polygon","Rectangle"].indexOf(geometryType) !== -1 ;
+};
+
+module.exports = isSingleGeometryType ;
 
 },{}],12:[function(require,module,exports){
 (function (global){

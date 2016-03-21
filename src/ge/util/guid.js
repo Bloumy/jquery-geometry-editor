@@ -1,6 +1,7 @@
 
 /**
  * Generates uuidv4
+ * @return {String} the generated uuid
  */
 var guid = function() {
     function s4() {
