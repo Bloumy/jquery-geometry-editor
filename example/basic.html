@@ -19,10 +19,12 @@
 
         $(document).ready(function() {
             $('#position').geometryEditor({
+                hide: true,
+                techno: "Leaflet",
                 height: 400,
                 geometryType: 'Point'
             });
-
+            
             // demo purpose
 
             function displayPosition(){
@@ -30,23 +32,23 @@
             }
             displayPosition();
 
-            $('#position').bind('change',displayPosition) ;
+            $('#position').bind('change',displayPosition) ;           
         });
 
     </script>
 </head>
 <body>
 
-    <h1>Create a place</h1>
+    <h1>Create a Geometry by draw</h1>
 
     <form target="#" method="get" onsubmit="return false;">
-        <div class="form-group">
+<!--        <div class="form-group">
             <label for="placeName">Place</label>
             <input type="text" class="form-control" id="placeName" placeholder="Place..." />
-        </div>
+        </div>-->
         <div class="form-group">
             <label for="position">Position</label>
-            <textarea id="position" name="geometry" class="hidden">
+            <textarea id="position" name="geometry">
                 {"type":"Point","coordinates":[2.33,48.85]}
             </textarea>
         </div>

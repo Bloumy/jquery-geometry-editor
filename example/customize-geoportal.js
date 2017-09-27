@@ -2,7 +2,7 @@
 /*
  * WARNING : Demo API KEY. See http://api.ign.fr/conditions-generales
  */
-var GEOPORTAL_API_KEY="ugbkgn9cl8dhva3dpwvn1lrw" ;
+var GEOPORTAL_API_KEY="509qg1v5djkkfjk9f2bhkiyl" ;
 
 /**
  *

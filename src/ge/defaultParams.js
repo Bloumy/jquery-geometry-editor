@@ -3,6 +3,7 @@
  * Default GeometryEditor parameters
  */
 var defaultParams = {
+    techno: "Leaflet", 
     tileLayers: [
        {
            url: "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
