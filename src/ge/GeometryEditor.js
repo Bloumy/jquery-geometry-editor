@@ -1,8 +1,7 @@
 var bboxPolygon = require('turf-bbox-polygon');
-var extent = require('turf-extent');
+
 
 var defaultParams = require('./defaultParams.js');
-var featureCollectionToGeometry = require('./util/featureCollectionToGeometry.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
 var isSingleGeometryType = require('./util/isSingleGeometryType.js');
 
@@ -23,6 +22,8 @@ var GeometryEditor = function (dataElement, options) {
 
     // init map
     this.map = this.initMap();
+    this.settings.varMapExport = this.map;
+    
 
     // init features
     this.initDrawLayer();
@@ -57,7 +58,9 @@ GeometryEditor.prototype.initMap = function () {
         layers: this.settings.tileLayers,
         lon: this.settings.lon,
         lat: this.settings.lat,
-        zoom: this.settings.zoom
+        zoom: this.settings.zoom,
+        maxZoom: this.settings.maxZoom,
+        minZoom: this.settings.minZoom,
     });
 };
 
@@ -103,7 +106,7 @@ GeometryEditor.prototype.setRawData = function (value) {
  * @param {Array|Object} geometry either a GeoJSON geometry or a bounding box
  */
 GeometryEditor.prototype.setGeometry = function (geometry) {
-    
+
     // hack to accept bbox
     if (geometry instanceof Array && geometry.length === 4) {
         geometry = bboxPolygon(geometry).geometry;
@@ -226,17 +229,9 @@ GeometryEditor.prototype.initDrawControls = function () {
  * @private
  */
 GeometryEditor.prototype.serializeGeometry = function () {
-    var featuresCollectionGeoJSON = this.featuresCollection.toGeoJSON();
-    var geometry = featureCollectionToGeometry(featuresCollectionGeoJSON);
-    if (geometry) {
-        if (this.getGeometryType() === 'Rectangle') {
-            this.setRawData(JSON.stringify(extent(geometry)));
-        } else {
-            this.setRawData(JSON.stringify(geometry));
-        }
-    } else {
-        this.setRawData('');
-    }
+    var geometryGeoJson = this.backend.getGeoJsonGeometry(this.featuresCollection, this.getGeometryType());
+    
+    this.setRawData(geometryGeoJson);
 };
 
 

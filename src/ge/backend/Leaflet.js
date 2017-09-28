@@ -1,5 +1,8 @@
 var L = require('leaflet');
 var DrawControl = require('leaflet-draw');
+var featureCollectionToGeometry = require('./../util/featureCollectionToGeometry.js');
+var extent = require('turf-extent');
+
 
 /**
  * Leaflet constructor from a dataElement containing a serialized geometry
@@ -34,7 +37,6 @@ Leaflet.prototype.createMap = function (mapId, options) {
  * @param {string} layers[].attribution - attribution
  * @param {Object} options - Options. Default : maxZoom = 18 
  * 
- * @return L.Map
  */
 Leaflet.prototype.addLayersToMap = function (map, layers, options) {
 
@@ -48,7 +50,6 @@ Leaflet.prototype.addLayersToMap = function (map, layers, options) {
             maxZoom: options.maxZoom || 18
         }).addTo(map);
     }
-    return map;
 };
 
 Leaflet.prototype.addControlToMap = function (map, control) {
@@ -134,5 +135,20 @@ Leaflet.prototype.canEdit = function (geometryTypeToCompare, geometryType) {
     }
     return false;
 };
+
+Leaflet.prototype.getGeoJsonGeometry = function (featuresCollection, geometryType) {
+    var geometry = featureCollectionToGeometry(featuresCollection.toGeoJSON());
+    if (geometry) {
+        if (geometryType === 'Rectangle') {
+            return JSON.stringify(extent(geometry));
+        } else {
+            return JSON.stringify(geometry);
+        }
+    } else {
+        return '';
+    }
+
+};
+
 
 module.exports = Leaflet;

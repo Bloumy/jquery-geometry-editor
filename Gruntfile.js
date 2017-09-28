@@ -44,12 +44,14 @@ module.exports = function(grunt) {
           'node_modules/leaflet/dist/leaflet.js',
           'node_modules/leaflet-draw/dist/leaflet.draw.js',
           'node_modules/leaflet-omnivore/leaflet-omnivore.min.js',
+          'node_modules/openlayers/dist/ol.js',
           'dist/jquery-geometry-editor.js'
         ],
         dest: 'dist/bundle.js',
       },
       "bundle-css": {
         src: [
+          'node_modules/openlayers/dist/ol.css',
           'node_modules/leaflet/dist/leaflet.css',
           'node_modules/leaflet-draw/dist/leaflet.draw.css'
         ],

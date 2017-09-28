@@ -1,62 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
-    <link href="style.css" rel="stylesheet">
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+        <link href="style.css" rel="stylesheet">
 
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="../dist/bundle.css" />
-    <script type="text/javascript" src="../dist/bundle.js"></script>
-    <script type="text/javascript" src="customize-geoportal.js"></script>
-    <script type="text/javascript">
-        L.Icon.Default.imagePath = "../dist/images";
+        <link rel="stylesheet" type="text/css" href="../dist/bundle.css" />
+        <script type="text/javascript" src="../dist/bundle.js"></script>
+        <script type="text/javascript" src="customize-geoportal.js"></script>
+        <script type="text/javascript">
+            L.Icon.Default.imagePath = "../dist/images";
 
-        $(document).ready(function() {
-            $('#position').geometryEditor({
-                hide: true,
-                techno: "Leaflet",
-                height: 400,
-                geometryType: 'Point'
+            $(document).ready(function () {
+
+
+                $('#position-openlayers').geometryEditor({
+                    hide: true,
+                    techno: "Openlayers",
+                    height: 400,
+                    geometryType: 'Point',
+                    width: '50%',
+                });
+
+                $('#position-leaflet').geometryEditor({
+                    hide: true,
+                    techno: "Leaflet",
+                    height: 400,
+                    geometryType: 'Point',
+                    width: '50%'
+                });
+
+                // demo purpose
+
+                function displayPositionLeaflet() {
+                    $("#result-leaflet").html($("#position-leaflet").val());
+                }
+                function displayPositionOpenlayers() {
+                    $("#result-openlayers").html($("#position-openlayers").val());
+                }
+
+                displayPositionLeaflet();
+                displayPositionOpenlayers();
+
+                $('#position-leaflet').bind('change', displayPositionLeaflet);
+                $('#position-openlayers').bind('change', displayPositionOpenlayers);
             });
-            
-            // demo purpose
 
-            function displayPosition(){
-                $("#result").html($("#position").val());
-            }
-            displayPosition();
+        </script>
+    </head>
+    <body>
 
-            $('#position').bind('change',displayPosition) ;           
-        });
+        <h1>Create a Geometry by draw</h1>
 
-    </script>
-</head>
-<body>
 
-    <h1>Create a Geometry by draw</h1>
+        <!--leaflet-->
+        <div id="leaflet" class="col-sm-6">
+            <h2>Leaflet</h2>
+            <form target="#" method="get" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="position-leaflet">Position</label>
+                    <textarea id="position-leaflet" name="geometry">
+                            {"type":"Point","coordinates":[2.33,48.85]}
+                    </textarea>
+                </div>
+            </form>
 
-    <form target="#" method="get" onsubmit="return false;">
-<!--        <div class="form-group">
-            <label for="placeName">Place</label>
-            <input type="text" class="form-control" id="placeName" placeholder="Place..." />
-        </div>-->
-        <div class="form-group">
-            <label for="position">Position</label>
-            <textarea id="position" name="geometry">
-                {"type":"Point","coordinates":[2.33,48.85]}
-            </textarea>
+            <h3>Position content :</h3>
+            <div id="result-leaflet" class="well"></div>
+
         </div>
-    </form>
 
-    <h1>Position content :</h1>
+        <!--openlayers-->
+        <div id="openlayers" class="col-sm-6">
 
-    <div id="result" class="well"></div>
-</body>
+            <h2>Openlayers</h2>
+            <form target="#" method="get" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="position-openlayers">Position</label>
+                    <textarea id="position-openlayers" name="geometry">
+                            {"type":"Point","coordinates":[2.33,48.85]}
+                    </textarea>
+                </div>
+            </form>
+
+            <h3>Position content :</h3>
+            <div id="result-openlayers" class="well"></div>
+        </div>
+
+    </body>
 
 </html>

@@ -124,6 +124,9 @@ Backend.prototype.addDrawEventsToMap = function (map, events) {
     this.techno.addDrawEventsToMap(map, events);
 };
 
+Backend.prototype.getGeoJsonGeometry = function (featuresCollection, geometryType) {
+    return this.techno.getGeoJsonGeometry(featuresCollection, geometryType);
+};
 
 
 module.exports = Backend;
