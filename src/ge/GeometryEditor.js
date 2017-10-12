@@ -1,9 +1,7 @@
 var bboxPolygon = require('turf-bbox-polygon');
 
-
 var defaultParams = require('./defaultParams.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
-var isSingleGeometryType = require('./util/isSingleGeometryType.js');
 
 var Backend = require('./backend/Backend');
 
@@ -18,12 +16,15 @@ var GeometryEditor = function (dataElement, options) {
     this.settings = {};
     $.extend(true, this.settings, defaultParams, options); // deep copy
 
-    this.backend = new Backend({techno: this.settings.techno});
+    this.backend = new Backend({
+        techno: this.settings.techno,
+        geometryType: this.settings.geometryType
+    });
 
     // init map
     this.map = this.initMap();
     this.settings.varMapExport = this.map;
-    
+
 
     // init features
     this.initDrawLayer();
@@ -38,10 +39,6 @@ var GeometryEditor = function (dataElement, options) {
         this.dataElement.hide();
     }
 
-    // update data when element change
-    this.dataElement.on('change', function () {
-        this.updateDrawLayer();
-    }.bind(this));
 };
 
 
@@ -60,7 +57,7 @@ GeometryEditor.prototype.initMap = function () {
         lat: this.settings.lat,
         zoom: this.settings.zoom,
         maxZoom: this.settings.maxZoom,
-        minZoom: this.settings.minZoom,
+        minZoom: this.settings.minZoom
     });
 };
 
@@ -98,7 +95,6 @@ GeometryEditor.prototype.setRawData = function (value) {
     } else {
         this.dataElement.html(value);
     }
-    this.dataElement.trigger('change');
 };
 
 /**
@@ -118,7 +114,7 @@ GeometryEditor.prototype.setGeometry = function (geometry) {
 
     this.backend.setGeometries(this.featuresCollection, geometries);
 
-    if (geometries.length !== 0) {
+    if (this.settings.centerOnResults && geometries.length > 0) {
         this.backend.fitBoundsToMap(this.map, this.featuresCollection);
     }
 
@@ -161,30 +157,6 @@ GeometryEditor.prototype.getGeometryType = function () {
     return this.settings.geometryType;
 };
 
-/**
- * Indicates if geometryType is allowed by restriction
- * @param {type} geometryType
- * @returns {Boolean}
- */
-GeometryEditor.prototype.canEdit = function (geometryType) {
-    if (geometryType === "Rectangle") {
-        if (this.getGeometryType().indexOf("Polygon") !== -1) {
-            return true;
-        }
-    }
-
-    if (this.getGeometryType() === "Geometry") {
-        return true;
-    }
-    if (this.getGeometryType() === "GeometryCollection") {
-        return true;
-    }
-    if (this.getGeometryType().indexOf(geometryType) !== -1) {
-        return true;
-    }
-    return false;
-};
-
 
 
 /**
@@ -202,16 +174,20 @@ GeometryEditor.prototype.initDrawControls = function () {
 
     this.backend.addDrawControlToMap(this.map, drawOptions);
 
-
     var events = {
         onDrawCreated: function (e) {
-            if (isSingleGeometryType(this.getGeometryType())) {
-                this.backend.removeFeatures(this.featuresCollection);
+
+            this.backend.drawCreatedHandler(this.featuresCollection, e);
+
+            if (this.settings.centerOnResults && this.backend.getFeaturesCount(this.featuresCollection) > 0) {
+                this.backend.fitBoundsToMap(this.map, this.featuresCollection);
             }
-            this.backend.addFeaturesToLayer(this.featuresCollection, e.layer);
             this.serializeGeometry();
         }.bind(this),
         onDrawModified: function (e) {
+            if (this.settings.centerOnResults && this.backend.getFeaturesCount(this.featuresCollection) > 0) {
+                this.backend.fitBoundsToMap(this.map, this.featuresCollection);
+            }
             this.serializeGeometry();
         }.bind(this),
         onDrawDeleted: function (e) {
@@ -230,7 +206,7 @@ GeometryEditor.prototype.initDrawControls = function () {
  */
 GeometryEditor.prototype.serializeGeometry = function () {
     var geometryGeoJson = this.backend.getGeoJsonGeometry(this.featuresCollection, this.getGeometryType());
-    
+    this.settings.onResult(geometryGeoJson);
     this.setRawData(geometryGeoJson);
 };
 

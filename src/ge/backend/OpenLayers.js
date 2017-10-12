@@ -1,17 +1,20 @@
 var ol = require('openlayers');
 var DrawControl = require('../util/openlayers/DrawControl');
+var extent = require('turf-extent');
+var featureCollectionToGeometry = require('./../util/featureCollectionToGeometry.js');
+var isSingleGeometryType = require('../util/isSingleGeometryType.js');
 
 /**
  * Openlayers constructor from a dataElement containing a serialized geometry
  * @param {Object} options
  */
 var Openlayers = function (options) {
-    
+
     this.settings = {
         dataProjection: "EPSG:4326",
         mapProjection: "EPSG:3857"
     };
-    
+
     $.extend(this.settings, options); // deep copy
 };
 
@@ -34,7 +37,7 @@ Openlayers.prototype.createMap = function (mapId, options) {
             maxZoom: options.maxZoom,
             projection: this.settings.mapProjection
         }),
-        controls: []
+        controls: [new ol.control.Zoom(), new ol.control.Attribution()]
     });
 
     return map;
@@ -95,48 +98,53 @@ Openlayers.prototype.setGeometries = function (featuresCollection, geometries) {
             geometry: geom.transform(this.settings.dataProjection, this.settings.mapProjection)
         });
 
+        feature.set('type', this.settings.geometryType);
         featuresCollection.push(feature);
     }
 };
 
 Openlayers.prototype.fitBoundsToMap = function (map, featuresCollection) {
-    map.getView().fit(featuresCollection.getArray()[0].getGeometry(), map.getSize());
+    var geometries = [];
+    featuresCollection.forEach(function (feature) {
+        geometries.push(feature.getGeometry());
+    });
+
+    map.getView().fit((new ol.geom.GeometryCollection(geometries)).getExtent(), {
+        size: map.getSize(),
+        duration: 100
+    });
 };
 
 Openlayers.prototype.createFeaturesCollection = function (map) {
-    var featuresCollection = new ol.Collection();
-
-    map.addLayer(new ol.layer.Vector({
-        source: new ol.source.Vector({
-            features: featuresCollection
-        })
-    }));
-
-    return featuresCollection;
+    return new ol.Collection();
 };
 
 Openlayers.prototype.removeFeatures = function (featuresCollection) {
     featuresCollection.clear();
 };
 
-Openlayers.prototype.addFeaturesToLayer = function (featuresCollection, layer) {
-    layer.addFeatures(featuresCollection);
+Openlayers.prototype.drawCreatedHandler = function (featuresCollection, e) {
+    if (isSingleGeometryType(this.getGeometryType())) {
+        this.removeFeatures(featuresCollection);
+        featuresCollection.push(e.feature);
+    }
+
+};
+
+/**
+ * Get output geometry type
+ * @returns {String}
+ */
+Openlayers.prototype.getGeometryType = function () {
+    return this.settings.geometryType;
 };
 
 Openlayers.prototype.addDrawControlToMap = function (map, drawOptions) {
 
+
     var drawControlOptions = {
-//        draw: {
-//            position: 'topleft',
-//            marker: this.canEdit(drawOptions.geometryType, "Point"),
-//            polyline: this.canEdit(drawOptions.geometryType, "LineString"),
-//            polygon: this.canEdit(drawOptions.geometryType, "Polygon"),
-//            rectangle: this.canEdit(drawOptions.geometryType, "Rectangle"),
-//            circle: false
-//        },
-//        edit: {
-//            featureGroup: drawOptions.features
-//        }
+        features: drawOptions.features,
+        type: drawOptions.geometryType
     };
 
     var drawControl = new DrawControl(drawControlOptions);
@@ -148,15 +156,33 @@ Openlayers.prototype.addDrawEventsToMap = function (map, events) {
     map.on('draw:created', events.onDrawCreated);
     map.on('draw:edited', events.onDrawModified);
     map.on('draw:deleted', events.onDrawDeleted);
-
 };
 
 
-
-
 Openlayers.prototype.getGeoJsonGeometry = function (featuresCollection, geometryType) {
-    var geom = featuresCollection.getArray()[0].getGeometry().clone();
-    return new ol.format.GeoJSON().writeGeometry(geom.transform(this.settings.mapProjection, this.settings.dataProjection));
+
+    var featuresGeoJson = (new ol.format.GeoJSON()).writeFeatures(
+            featuresCollection.getArray(),
+            {
+                featureProjection: this.settings.mapProjection,
+                dataProjection: this.settings.dataProjection
+            });
+
+    var geometry = featureCollectionToGeometry(JSON.parse(featuresGeoJson));
+
+    if (geometry) {
+        if (geometryType === 'Rectangle') {
+            return JSON.stringify(extent(geometry));
+        } else {
+            return JSON.stringify(geometry);
+        }
+    } else {
+        return '';
+    }
+};
+
+Openlayers.prototype.getFeaturesCount = function (featuresCollection) {
+    return featuresCollection.getLength();
 };
 
 

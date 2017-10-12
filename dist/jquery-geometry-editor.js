@@ -300,10 +300,8 @@ module.exports = function(coordinates, properties){
 },{}],5:[function(require,module,exports){
 var bboxPolygon = require('turf-bbox-polygon');
 
-
 var defaultParams = require('./defaultParams.js');
 var geometryToSimpleGeometries = require('./util/geometryToSimpleGeometries');
-var isSingleGeometryType = require('./util/isSingleGeometryType.js');
 
 var Backend = require('./backend/Backend');
 
@@ -318,12 +316,15 @@ var GeometryEditor = function (dataElement, options) {
     this.settings = {};
     $.extend(true, this.settings, defaultParams, options); // deep copy
 
-    this.backend = new Backend({techno: this.settings.techno});
+    this.backend = new Backend({
+        techno: this.settings.techno,
+        geometryType: this.settings.geometryType
+    });
 
     // init map
     this.map = this.initMap();
     this.settings.varMapExport = this.map;
-    
+
 
     // init features
     this.initDrawLayer();
@@ -338,10 +339,6 @@ var GeometryEditor = function (dataElement, options) {
         this.dataElement.hide();
     }
 
-    // update data when element change
-    this.dataElement.on('change', function () {
-        this.updateDrawLayer();
-    }.bind(this));
 };
 
 
@@ -360,7 +357,7 @@ GeometryEditor.prototype.initMap = function () {
         lat: this.settings.lat,
         zoom: this.settings.zoom,
         maxZoom: this.settings.maxZoom,
-        minZoom: this.settings.minZoom,
+        minZoom: this.settings.minZoom
     });
 };
 
@@ -398,7 +395,6 @@ GeometryEditor.prototype.setRawData = function (value) {
     } else {
         this.dataElement.html(value);
     }
-    this.dataElement.trigger('change');
 };
 
 /**
@@ -418,7 +414,7 @@ GeometryEditor.prototype.setGeometry = function (geometry) {
 
     this.backend.setGeometries(this.featuresCollection, geometries);
 
-    if (geometries.length !== 0) {
+    if (this.settings.centerOnResults && geometries.length > 0) {
         this.backend.fitBoundsToMap(this.map, this.featuresCollection);
     }
 
@@ -461,30 +457,6 @@ GeometryEditor.prototype.getGeometryType = function () {
     return this.settings.geometryType;
 };
 
-/**
- * Indicates if geometryType is allowed by restriction
- * @param {type} geometryType
- * @returns {Boolean}
- */
-GeometryEditor.prototype.canEdit = function (geometryType) {
-    if (geometryType === "Rectangle") {
-        if (this.getGeometryType().indexOf("Polygon") !== -1) {
-            return true;
-        }
-    }
-
-    if (this.getGeometryType() === "Geometry") {
-        return true;
-    }
-    if (this.getGeometryType() === "GeometryCollection") {
-        return true;
-    }
-    if (this.getGeometryType().indexOf(geometryType) !== -1) {
-        return true;
-    }
-    return false;
-};
-
 
 
 /**
@@ -502,16 +474,20 @@ GeometryEditor.prototype.initDrawControls = function () {
 
     this.backend.addDrawControlToMap(this.map, drawOptions);
 
-
     var events = {
         onDrawCreated: function (e) {
-            if (isSingleGeometryType(this.getGeometryType())) {
-                this.backend.removeFeatures(this.featuresCollection);
+
+            this.backend.drawCreatedHandler(this.featuresCollection, e);
+
+            if (this.settings.centerOnResults && this.backend.getFeaturesCount(this.featuresCollection) > 0) {
+                this.backend.fitBoundsToMap(this.map, this.featuresCollection);
             }
-            this.backend.addFeaturesToLayer(this.featuresCollection, e.layer);
             this.serializeGeometry();
         }.bind(this),
         onDrawModified: function (e) {
+            if (this.settings.centerOnResults && this.backend.getFeaturesCount(this.featuresCollection) > 0) {
+                this.backend.fitBoundsToMap(this.map, this.featuresCollection);
+            }
             this.serializeGeometry();
         }.bind(this),
         onDrawDeleted: function (e) {
@@ -530,14 +506,14 @@ GeometryEditor.prototype.initDrawControls = function () {
  */
 GeometryEditor.prototype.serializeGeometry = function () {
     var geometryGeoJson = this.backend.getGeoJsonGeometry(this.featuresCollection, this.getGeometryType());
-    
+    this.settings.onResult(geometryGeoJson);
     this.setRawData(geometryGeoJson);
 };
 
 
 module.exports = GeometryEditor;
 
-},{"./backend/Backend":6,"./defaultParams.js":9,"./util/geometryToSimpleGeometries":12,"./util/isSingleGeometryType.js":14,"turf-bbox-polygon":1}],6:[function(require,module,exports){
+},{"./backend/Backend":6,"./defaultParams.js":9,"./util/geometryToSimpleGeometries":12,"turf-bbox-polygon":1}],6:[function(require,module,exports){
 var guid = require('../util/guid');
 
 var Leaflet = require('./Leaflet');
@@ -563,10 +539,14 @@ var Backend = function (options) {
 
     switch (options.techno) {
         case 'Leaflet':
-            this.techno = new Leaflet();
+            this.techno = new Leaflet({
+                geometryType: options.geometryType
+            });
             break;
         case 'Openlayers':
-            this.techno = new Openlayers();
+            this.techno = new Openlayers({
+                geometryType: options.geometryType
+            });
             break;
     }
 };
@@ -642,8 +622,8 @@ Backend.prototype.createFeaturesCollection = function (map) {
     return this.techno.createFeaturesCollection(map);
 };
 
-Backend.prototype.addFeaturesToLayer = function (features, layer) {
-    this.techno.addFeaturesToLayer(features, layer);
+Backend.prototype.drawCreatedHandler = function (featuresCollection, e) {
+    this.techno.drawCreatedHandler(featuresCollection, e);
 };
 
 Backend.prototype.removeFeatures = function (features) {
@@ -668,6 +648,9 @@ Backend.prototype.getGeoJsonGeometry = function (featuresCollection, geometryTyp
     return this.techno.getGeoJsonGeometry(featuresCollection, geometryType);
 };
 
+Backend.prototype.getFeaturesCount = function (featuresCollection) {
+    return this.techno.getFeaturesCount(featuresCollection);
+};
 
 module.exports = Backend;
 
@@ -677,6 +660,7 @@ var L = (typeof window !== "undefined" ? window['L'] : typeof global !== "undefi
 var DrawControl = (typeof window !== "undefined" ? window['L']['Control']['Draw'] : typeof global !== "undefined" ? global['L']['Control']['Draw'] : null);
 var featureCollectionToGeometry = require('./../util/featureCollectionToGeometry.js');
 var extent = require('turf-extent');
+var isSingleGeometryType = require('../util/isSingleGeometryType.js');
 
 
 /**
@@ -684,7 +668,9 @@ var extent = require('turf-extent');
  * @param {Object} options
  */
 var Leaflet = function (options) {
-    this.settings = {};
+    this.settings = {
+        geometryType: null
+    };
     $.extend(this.settings, options); // deep copy
 };
 
@@ -752,8 +738,12 @@ Leaflet.prototype.removeFeatures = function (featuresCollection) {
     featuresCollection.clearLayers();
 };
 
-Leaflet.prototype.addFeaturesToLayer = function (featuresCollection, layer) {
-    featuresCollection.addLayer(layer);
+Leaflet.prototype.drawCreatedHandler = function (featuresCollection, e, type) {
+
+    if (isSingleGeometryType(this.getGeometryType())) {
+        this.removeFeatures(featuresCollection);
+    }
+    featuresCollection.addLayer(e.layer);
 };
 
 Leaflet.prototype.addDrawControlToMap = function (map, drawOptions) {
@@ -782,6 +772,14 @@ Leaflet.prototype.addDrawEventsToMap = function (map, events) {
     map.on('draw:edited', events.onDrawModified);
     map.on('draw:deleted', events.onDrawDeleted);
 
+};
+
+/**
+ * Get output geometry type
+ * @returns {String}
+ */
+Leaflet.prototype.getGeometryType = function () {
+    return this.settings.geometryType;
 };
 
 /**
@@ -826,25 +824,34 @@ Leaflet.prototype.getGeoJsonGeometry = function (featuresCollection, geometryTyp
 };
 
 
+
+Leaflet.prototype.getFeaturesCount = function (featuresCollection) {
+    return featuresCollection.getLayers().length;
+};
+
+
 module.exports = Leaflet;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./../util/featureCollectionToGeometry.js":10,"turf-extent":2}],8:[function(require,module,exports){
+},{"../util/isSingleGeometryType.js":14,"./../util/featureCollectionToGeometry.js":10,"turf-extent":2}],8:[function(require,module,exports){
 (function (global){
 var ol = (typeof window !== "undefined" ? window['ol'] : typeof global !== "undefined" ? global['ol'] : null);
 var DrawControl = require('../util/openlayers/DrawControl');
+var extent = require('turf-extent');
+var featureCollectionToGeometry = require('./../util/featureCollectionToGeometry.js');
+var isSingleGeometryType = require('../util/isSingleGeometryType.js');
 
 /**
  * Openlayers constructor from a dataElement containing a serialized geometry
  * @param {Object} options
  */
 var Openlayers = function (options) {
-    
+
     this.settings = {
         dataProjection: "EPSG:4326",
         mapProjection: "EPSG:3857"
     };
-    
+
     $.extend(this.settings, options); // deep copy
 };
 
@@ -867,7 +874,7 @@ Openlayers.prototype.createMap = function (mapId, options) {
             maxZoom: options.maxZoom,
             projection: this.settings.mapProjection
         }),
-        controls: []
+        controls: [new ol.control.Zoom(), new ol.control.Attribution()]
     });
 
     return map;
@@ -928,48 +935,53 @@ Openlayers.prototype.setGeometries = function (featuresCollection, geometries) {
             geometry: geom.transform(this.settings.dataProjection, this.settings.mapProjection)
         });
 
+        feature.set('type', this.settings.geometryType);
         featuresCollection.push(feature);
     }
 };
 
 Openlayers.prototype.fitBoundsToMap = function (map, featuresCollection) {
-    map.getView().fit(featuresCollection.getArray()[0].getGeometry(), map.getSize());
+    var geometries = [];
+    featuresCollection.forEach(function (feature) {
+        geometries.push(feature.getGeometry());
+    });
+
+    map.getView().fit((new ol.geom.GeometryCollection(geometries)).getExtent(), {
+        size: map.getSize(),
+        duration: 100
+    });
 };
 
 Openlayers.prototype.createFeaturesCollection = function (map) {
-    var featuresCollection = new ol.Collection();
-
-    map.addLayer(new ol.layer.Vector({
-        source: new ol.source.Vector({
-            features: featuresCollection
-        })
-    }));
-
-    return featuresCollection;
+    return new ol.Collection();
 };
 
 Openlayers.prototype.removeFeatures = function (featuresCollection) {
     featuresCollection.clear();
 };
 
-Openlayers.prototype.addFeaturesToLayer = function (featuresCollection, layer) {
-    layer.addFeatures(featuresCollection);
+Openlayers.prototype.drawCreatedHandler = function (featuresCollection, e) {
+    if (isSingleGeometryType(this.getGeometryType())) {
+        this.removeFeatures(featuresCollection);
+        featuresCollection.push(e.feature);
+    }
+
+};
+
+/**
+ * Get output geometry type
+ * @returns {String}
+ */
+Openlayers.prototype.getGeometryType = function () {
+    return this.settings.geometryType;
 };
 
 Openlayers.prototype.addDrawControlToMap = function (map, drawOptions) {
 
+
     var drawControlOptions = {
-//        draw: {
-//            position: 'topleft',
-//            marker: this.canEdit(drawOptions.geometryType, "Point"),
-//            polyline: this.canEdit(drawOptions.geometryType, "LineString"),
-//            polygon: this.canEdit(drawOptions.geometryType, "Polygon"),
-//            rectangle: this.canEdit(drawOptions.geometryType, "Rectangle"),
-//            circle: false
-//        },
-//        edit: {
-//            featureGroup: drawOptions.features
-//        }
+        features: drawOptions.features,
+        type: drawOptions.geometryType
     };
 
     var drawControl = new DrawControl(drawControlOptions);
@@ -981,22 +993,40 @@ Openlayers.prototype.addDrawEventsToMap = function (map, events) {
     map.on('draw:created', events.onDrawCreated);
     map.on('draw:edited', events.onDrawModified);
     map.on('draw:deleted', events.onDrawDeleted);
-
 };
 
 
-
-
 Openlayers.prototype.getGeoJsonGeometry = function (featuresCollection, geometryType) {
-    var geom = featuresCollection.getArray()[0].getGeometry().clone();
-    return new ol.format.GeoJSON().writeGeometry(geom.transform(this.settings.mapProjection, this.settings.dataProjection));
+
+    var featuresGeoJson = (new ol.format.GeoJSON()).writeFeatures(
+            featuresCollection.getArray(),
+            {
+                featureProjection: this.settings.mapProjection,
+                dataProjection: this.settings.dataProjection
+            });
+
+    var geometry = featureCollectionToGeometry(JSON.parse(featuresGeoJson));
+
+    if (geometry) {
+        if (geometryType === 'Rectangle') {
+            return JSON.stringify(extent(geometry));
+        } else {
+            return JSON.stringify(geometry);
+        }
+    } else {
+        return '';
+    }
+};
+
+Openlayers.prototype.getFeaturesCount = function (featuresCollection) {
+    return featuresCollection.getLength();
 };
 
 
 module.exports = Openlayers;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../util/openlayers/DrawControl":15}],9:[function(require,module,exports){
+},{"../util/isSingleGeometryType.js":14,"../util/openlayers/DrawControl":15,"./../util/featureCollectionToGeometry.js":10,"turf-extent":2}],9:[function(require,module,exports){
 
 /**
  * Default GeometryEditor parameters
@@ -1020,7 +1050,9 @@ var defaultParams = {
     lat: 45.0,
     zoom: 4,
     maxZoom: 18,
-    geometryType: 'Geometry'
+    geometryType: 'Geometry',
+    centerOnResults: true,
+    onResult: function(){}
 } ;
 
 module.exports = defaultParams ;
@@ -1186,6 +1218,8 @@ module.exports = isSingleGeometryType ;
 },{}],15:[function(require,module,exports){
 (function (global){
 var ol = (typeof window !== "undefined" ? window['ol'] : typeof global !== "undefined" ? global['ol'] : null);
+var DeleteInteraction = require('./customInteractions/DeleteInteraction');
+var ModifyBoxInteraction = require('./customInteractions/ModifyBoxInteraction');
 
 
 /**
@@ -1202,44 +1236,23 @@ var ol = (typeof window !== "undefined" ? window['ol'] : typeof global !== "unde
 var DrawControl = function (options) {
 
     var settings = {
-        featuresCollection: null,
+        layer: null,
+        features: null,
         type: "",
         title: "",
-        hitTolerance: 10,
-        onDrawStart: function () {},
-        onDrawEnd: function () {},
-        onDeactivate: function () {},
-        onActivate: function () {}
     };
 
     this.settings = $.extend(settings, options);
 
     this.active = false;
 
-    var element = $("<div>").addClass('ol-draw-' + this.settings.type.toLowerCase() + ' ol-unselectable ol-control');
-
-
-    var self = this;
-    $("<button>").attr('title', this.settings.title)
-            .on("touchstart click", function (e)
-            {
-                if (e && e.preventDefault)
-                    e.preventDefault();
-
-                self.setActive(!self.active);
-            }
-            )
-            .html('<span class="glyphicon gpu-draw-' + this.settings.type.toLowerCase() + '"></span>')
-            .appendTo(element);
+    this.drawBar = $("<div>").addClass('ol-draw ol-unselectable ol-control');
 
 
     ol.control.Control.call(this, {
-        element: element.get(0),
+        element: this.drawBar.get(0),
         target: options.target
     });
-
-    this.drawInteraction = this.createDrawInteraction();
-
 };
 
 ol.inherits(DrawControl, ol.control.Control);
@@ -1251,72 +1264,924 @@ DrawControl.prototype.setMap = function (map) {
 };
 
 DrawControl.prototype.initControl = function () {
+    this.createDrawLayer();
+    this.addDrawInteraction();
+    this.addModifyInteraction();
+    this.addDeleteInteraction();
+    this.configureInteractionSwitching();
+};
+
+
+
+DrawControl.prototype.createDrawLayer = function () {
+
+    this.settings.features.forEach(function (feature) {
+        feature.setStyle(this.getFeatureStyleByGeometryType(feature.getGeometry().getType()));
+    }, this);
+
+
+    this.layer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            features: this.settings.features
+        })
+    });
+
+    this.getMap().addLayer(this.layer);
+
+};
+
+DrawControl.prototype.getDrawLayer = function () {
+    return this.layer;
+};
+
+
+DrawControl.prototype.addDrawInteraction = function () {
+    var featuresCollection = new ol.Collection();
+
+    var drawParams = {
+        type: this.settings.type,
+        style: this.getFeatureStyleByGeometryType(this.settings.type),
+        features: featuresCollection
+    };
+
+
+    if (this.settings.type === 'Square') {
+        drawParams.type = "Circle";
+        drawParams.geometryFunction = ol.interaction.Draw.createRegularPolygon(4);
+    }
+    if (this.settings.type === 'Rectangle') {
+        drawParams.type = "Circle";
+        drawParams.geometryFunction = ol.interaction.Draw.createBox();
+    }
+
+    this.drawInteraction = new ol.interaction.Draw(drawParams);
+
+    this.drawInteraction.on('drawend', function (e) {
+
+        e.feature.set('type', this.settings.type);
+        e.feature.setStyle(this.getFeatureStyleByGeometryType(this.settings.type));
+
+        this.settings.features.push(e.feature);
+
+        this.getMap().dispatchEvent($.extend(e, {
+            type: "draw:created",
+            layer: this.getDrawLayer()
+        }));
+
+    }.bind(this));
+
+
     this.getMap().addInteraction(this.drawInteraction);
-    this.drawInteraction.setActive(false);
+
+
+    this.setDrawInteractionActive = function (active) {
+        this.drawInteraction.setActive(active);
+
+        if (active) {
+            drawButton.addClass("active");
+            this.dispatchEvent('draw:active');
+        } else {
+            drawButton.removeClass("active");
+            this.dispatchEvent('draw:inactive');
+        }
+
+    }.bind(this);
+
+
+    // creation du bouton activant l'interaction
+    var drawButton = $("<button>").attr('title', 'Draw a ' + this.settings.type.toLowerCase())
+            .addClass('ol-draw-' + this.settings.type.toLowerCase())
+            .on("touchstart click", function (e)
+            {
+                if (e && e.preventDefault)
+                    e.preventDefault();
+
+                this.setDrawInteractionActive(!this.drawInteraction.getActive());
+
+            }.bind(this))
+            .appendTo(this.drawBar);
+
+    this.setDrawInteractionActive(false);
+
 };
 
-DrawControl.prototype.setActive = function (active) {
-
-    if (active && !this.active) {
-        $(this).trigger('activate');
-        this.settings.onActivate(this);
-        this.getMap().addInteraction(this.drawInteraction);
-        this.drawInteraction.setActive(true);
-        this.active = true;
-        $(this.element).addClass('active');
-
-    }
-    if (!active && this.active) {
-        $(this).trigger('deactivate');
-        this.settings.onDeactivate(this);
-        this.drawInteraction.setActive(false);
-        this.active = false;
-        $(this.element).removeClass('active');
-
-    }
-
+DrawControl.prototype.getDrawInteraction = function () {
+    return this.drawInteraction;
 };
 
-DrawControl.prototype.createDrawInteraction = function () {
-    var type = null;
-    switch (this.settings.type) {
-        case "Point" :
-            type = "Point";
-            break;
-        case "Text":
-            type = "Point";
-            break;
-        case "LineString":
-            type = "LineString";
-            break;
-        case "Polygon":
-            type = "Polygon";
-            break;
-    }
 
+/**
+ * Prepare des ol.Collections de features afin d'appliquer chaque groupe 
+ * de features à une interaction de modification
+ * 
+ * @returns {undefined}
+ */
+DrawControl.prototype.prepareFeatureGroup = function () {
 
-    var drawInteraction = new ol.interaction.Draw({
-        type: type,
-        features: this.settings.featuresCollection,
-        style: this.settings.styleWhenDrown
+    this.featuresBasic = new ol.Collection();
+    this.featuresBox = new ol.Collection();
+    this.featuresSquare = new ol.Collection();
+
+    var addFeatureOnRightCollection = function (feature) {
+        switch (feature.get('type')) {
+            case "Rectangle":
+                this.featuresBox.push(feature);
+                break;
+            case "Square":
+                this.featuresSquare.push(feature);
+                break;
+
+            default:
+                this.featuresBasic.push(feature);
+                break;
+        }
+    }.bind(this);
+
+    var removeFeatureOnRightCollection = function (feature) {
+        switch (feature.get('type')) {
+            case "Rectangle":
+                this.featuresBox.remove(feature);
+                break;
+            case "Square":
+                this.featuresSquare.remove(feature);
+                break;
+
+            default:
+                this.featuresBasic.remove(feature);
+                break;
+        }
+    }.bind(this);
+
+    this.settings.features.forEach(addFeatureOnRightCollection.bind(this));
+
+    this.settings.features.on('add', function (e) {
+        addFeatureOnRightCollection(e.element);
+    });
+    this.settings.features.on('remove', function (e) {
+        removeFeatureOnRightCollection(e.element);
     });
 
-    var self = this;
-    drawInteraction.on('drawstart', this.settings.onDrawStart);
-    drawInteraction.on('drawend', function (e) {
-        e.feature.setStyle(self.settings.styleWhenAdded);
-        e.feature.setProperties({gpuGeometryType: self.settings.type});
-        self.settings.onDrawEnd(e);
+};
 
+DrawControl.prototype.addModifyInteraction = function () {
+
+
+    this.prepareFeatureGroup();
+
+    this.modifyInteractionBox = new ModifyBoxInteraction({
+        features: this.featuresBox,
+        type: this.settings.type
     });
 
-    return drawInteraction;
+    this.modifyInteractionSquare = new ol.interaction.Modify({
+        features: this.featuresSquare,
+        insertVertexCondition: function () {
+            return false;
+        }
+    });
+
+    this.modifyInteractionBasic = new ol.interaction.Modify({
+        features: this.featuresBasic
+    });
+
+
+    this.translateInteractionSquare = new ol.interaction.Translate({
+        features: this.featuresSquare
+    });
+    this.translateInteractionBasic = new ol.interaction.Translate({
+        features: this.featuresBasic
+    });
+
+    this.modifyInteractions = [
+        this.modifyInteractionBasic,
+        this.modifyInteractionBox,
+        this.modifyInteractionSquare
+    ];
+
+
+
+
+
+    var modifyend = function (e) {
+        this.getMap().dispatchEvent($.extend(e, {type: "draw:edited"}));
+    }.bind(this);
+
+    for (var i in this.modifyInteractions) {
+
+        this.modifyInteractions[i].on('modifyend', modifyend);
+
+        this.getMap().addInteraction(this.modifyInteractions[i]);
+    }
+
+
+    this.getMap().addInteraction(this.translateInteractionSquare);
+    this.getMap().addInteraction(this.translateInteractionBasic);
+
+    this.setModifyInteractionsActive = function (active) {
+
+        for (var j in this.modifyInteractions) {
+            this.modifyInteractions[j].setActive(active);
+        }
+        this.translateInteractionBasic.setActive(active);
+        this.translateInteractionSquare.setActive(active);
+
+
+        if (active) {
+            modifyButton.addClass("active");
+            this.dispatchEvent('edit:active');
+        } else {
+            modifyButton.removeClass("active");
+            this.dispatchEvent('edit:inactive');
+        }
+        this.modifyInteractionsActive = active;
+    }.bind(this);
+
+
+    var modifyButton = $("<button>").attr('title', 'Modify a ' + this.settings.type.toLowerCase())
+            .addClass('ol-edit')
+            .on("touchstart click", function (e)
+            {
+                if (e && e.preventDefault)
+                    e.preventDefault();
+
+                this.setModifyInteractionsActive(!this.modifyInteractionsActive);
+
+            }.bind(this))
+            .appendTo(this.drawBar);
+
+    this.setModifyInteractionsActive(false);
+
 };
+
+
+DrawControl.prototype.getModifyInteraction = function () {
+    return this.modifyInteraction;
+};
+
+
+
+
+DrawControl.prototype.addDeleteInteraction = function () {
+
+    this.deleteInteraction = new DeleteInteraction({
+        features: this.settings.features
+    });
+
+    this.deleteInteraction.on('deleteend', function (e) {
+        this.getMap().dispatchEvent($.extend(e, {type: "draw:deleted"}));
+    }.bind(this));
+
+
+    this.getMap().addInteraction(this.deleteInteraction);
+
+    this.setDeleteInteractionActive = function (active) {
+        this.deleteInteraction.setActive(active);
+
+        if (active) {
+            deleteButton.addClass("active");
+            this.dispatchEvent('remove:active');
+        } else {
+            deleteButton.removeClass("active");
+            this.dispatchEvent('remove:inactive');
+        }
+    }.bind(this);
+
+
+    // creation du bouton activant l'interaction
+    var deleteButton = $("<button>").attr('title', 'Delete a feature')
+            .addClass('ol-delete')
+            .on("touchstart click", function (e)
+            {
+                if (e && e.preventDefault)
+                    e.preventDefault();
+
+                this.setDeleteInteractionActive(!this.deleteInteraction.getActive());
+
+            }.bind(this))
+            .appendTo(this.drawBar);
+
+    this.setDeleteInteractionActive(false);
+
+};
+
+DrawControl.prototype.getDeleteInteraction = function () {
+    return this.deleteInteraction;
+};
+
+DrawControl.prototype.configureInteractionSwitching = function () {
+    this.on('draw:active', function () {
+        this.setModifyInteractionsActive(false);
+        this.setDeleteInteractionActive(false);
+    }.bind(this));
+    this.on('edit:active', function () {
+        this.setDrawInteractionActive(false);
+        this.setDeleteInteractionActive(false);
+    }.bind(this));
+    this.on('remove:active', function () {
+        this.setDrawInteractionActive(false);
+        this.setModifyInteractionsActive(false);
+    }.bind(this));
+
+};
+
+DrawControl.prototype.getFeatureStyleByGeometryType = function (geometryType) {
+
+    switch (geometryType) {
+        case "Point":
+            var markerStyle = new ol.style.Style({
+                image: new ol.style.Icon({
+                    anchor: [0.5, 41],
+                    anchorXUnits: 'fraction',
+                    anchorYUnits: 'pixels',
+                    opacity: 1,
+                    src: '../dist/images/marker-icon.png'
+                })
+            });
+            var shadowMarker = new ol.style.Style({
+                image: new ol.style.Icon({
+                    anchor: [14, 41],
+                    anchorXUnits: 'pixels',
+                    anchorYUnits: 'pixels',
+                    opacity: 1,
+                    src: '../dist/images/marker-shadow.png'
+                })
+            });
+
+            return [shadowMarker, markerStyle];
+
+        default:
+            break;
+    }
+
+};
+
 
 module.exports = DrawControl;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],16:[function(require,module,exports){
+},{"./customInteractions/DeleteInteraction":16,"./customInteractions/ModifyBoxInteraction":17}],16:[function(require,module,exports){
+(function (global){
+var ol = (typeof window !== "undefined" ? window['ol'] : typeof global !== "undefined" ? global['ol'] : null);
+
+/**
+ * @constructor
+ * @extends {ol.interaction.Pointer}
+ */
+var DeleteInteraction = function (opt_options) {
+
+    opt_options = $.extend({
+        features: null,
+    }, opt_options);
+
+    ol.interaction.Pointer.call(this, {
+        handleDownEvent: DeleteInteraction.prototype.handleDownEvent,
+        handleDragEvent: DeleteInteraction.prototype.handleDragEvent,
+        handleMoveEvent: DeleteInteraction.prototype.handleMoveEvent,
+        handleUpEvent: DeleteInteraction.prototype.handleUpEvent
+    });
+
+    this.features = opt_options.features;
+
+
+    /**
+     * @type {string|undefined}
+     * @private
+     */
+    this.pointerCursor_ = 'pointer';
+
+    /**
+     * @type {ol.Feature}
+     * @private
+     */
+    this.feature_ = null;
+
+    /**
+     * @type {string|undefined}
+     * @private
+     */
+    this.previousCursor_ = undefined;
+
+};
+ol.inherits(DeleteInteraction, ol.interaction.Pointer);
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ */
+DeleteInteraction.prototype.handleDownEvent = function (evt) {
+    var map = evt.map;
+
+    var feature = map.forEachFeatureAtPixel(evt.pixel,
+            function (feature) {
+                for (var i in this.features.getArray()) {
+                    if (this.features.getArray()[i] === feature) {
+                        return feature;
+                    }
+                }
+            }.bind(this));
+
+    this.feature_ = feature;
+    return !!feature;
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ */
+DeleteInteraction.prototype.handleDragEvent = function (evt) {
+    var map = evt.map;
+    var feature = map.forEachFeatureAtPixel(evt.pixel,
+            function (feature) {
+                for (var i in this.features.getArray()) {
+                    if (this.features.getArray()[i] === feature) {
+                        return feature;
+                    }
+                }
+            }.bind(this));
+    var element = evt.map.getTargetElement();
+
+    if (feature) {
+        if (element.style.cursor != this.pointerCursor_) {
+            this.previousCursor_ = element.style.cursor;
+            element.style.cursor = this.pointerCursor_;
+        }
+        // gerer curseur ici
+    } else if (this.previousCursor_ !== undefined) {
+        element.style.cursor = this.previousCursor_;
+        this.previousCursor_ = undefined;
+    }
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ */
+DeleteInteraction.prototype.handleMoveEvent = function (evt) {
+    var map = evt.map;
+    var feature = map.forEachFeatureAtPixel(evt.pixel,
+            function (feature) {
+                for (var i in this.features.getArray()) {
+                    if (this.features.getArray()[i] === feature) {
+                        return feature;
+                    }
+                }
+            }.bind(this));
+    var element = evt.map.getTargetElement();
+
+    if (feature) {
+        if (element.style.cursor != this.pointerCursor_) {
+            this.previousCursor_ = element.style.cursor;
+            element.style.cursor = this.pointerCursor_;
+        }
+        // gerer curseur ici
+    } else if (this.previousCursor_ !== undefined) {
+        element.style.cursor = this.previousCursor_;
+        this.previousCursor_ = undefined;
+    }
+
+
+};
+
+
+/**
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+DeleteInteraction.prototype.handleUpEvent = function (evt) {
+
+    var map = evt.map;
+
+    var deletedFeature = map.forEachFeatureAtPixel(evt.pixel,
+            function (feature) {
+                for (var i in this.features.getArray()) {
+                    if (this.features.getArray()[i] === feature && this.feature_ === feature) {
+                        this.features.remove(feature);
+                    }
+                }
+            }.bind(this));
+
+    var feature = map.forEachFeatureAtPixel(evt.pixel,
+            function (feature) {
+                for (var i in this.features.getArray()) {
+                    if (this.features.getArray()[i] === feature) {
+                        return feature;
+                    }
+                }
+            }.bind(this));
+
+    var element = evt.map.getTargetElement();
+
+    if (feature) {
+        element.style.cursor = this.pointerCursor_;
+
+        // gerer curseur ici
+    } else if (element.style.cursor !== undefined) {
+        element.style.cursor = undefined;
+    }
+
+    this.dispatchEvent({type: "deleteend"});
+    return false;
+};
+
+
+
+module.exports = DeleteInteraction;
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],17:[function(require,module,exports){
+(function (global){
+var ol = (typeof window !== "undefined" ? window['ol'] : typeof global !== "undefined" ? global['ol'] : null);
+
+/**
+ * @constructor
+ * @extends {ol.interaction.Pointer}
+ */
+var ModifyBoxInteraction = function (opt_options) {
+
+    opt_options = $.extend({
+        features: null,
+        type: "Rectangle"
+    }, opt_options);
+
+    ol.interaction.Pointer.call(this, {
+        handleDownEvent: ModifyBoxInteraction.prototype.handleDownEvent,
+        handleDragEvent: ModifyBoxInteraction.prototype.handleDragEvent,
+        handleMoveEvent: ModifyBoxInteraction.prototype.handleMoveEvent,
+        handleUpEvent: ModifyBoxInteraction.prototype.handleUpEvent
+    });
+
+    this.features = opt_options.features;
+    this.type = opt_options.type;
+
+
+    /**
+     * @type {ol.Pixel}
+     * @private
+     */
+    this.coordinate_ = null;
+
+    /**
+     * @type {string|undefined}
+     * @private
+     */
+    this.grabCursor_ = 'grab';
+    /**
+     * @type {string|undefined}
+     * @private
+     */
+    this.grabbingCursor_ = 'grabbing';
+
+    /**
+     * @type {ol.Feature}
+     * @private
+     */
+    this.feature_ = null;
+
+    /**
+     * @type {string|undefined}
+     * @private
+     */
+    this.previousCursor_ = undefined;
+
+
+
+    /**
+     * Draw overlay where sketch features are drawn.
+     * @type {ol.layer.Vector}
+     * @private
+     */
+    this.overlay_ = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            useSpatialIndex: false,
+            wrapX: !!opt_options.wrapX
+        }),
+        style: opt_options.style,
+        updateWhileAnimating: true,
+        updateWhileInteracting: true
+    });
+
+    this.overlayPoints_ = [];
+
+};
+
+ol.inherits(ModifyBoxInteraction, ol.interaction.Pointer);
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ */
+ModifyBoxInteraction.prototype.handleDownEvent = function (evt) {
+    this.deltaX = 0;
+    this.deltaY = 0;
+
+    var feature = this.getFeatureUnderMouse_(evt);
+
+    if (feature) {
+        this.coordinate_ = evt.coordinate;
+        this.feature_ = feature;
+
+        var element = evt.map.getTargetElement();
+
+        if (element.style.cursor !== this.grabbingCursor_) {
+            element.style.cursor = this.grabbingCursor_;
+        }
+
+    }
+
+    return !!feature;
+};
+
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ */
+ModifyBoxInteraction.prototype.handleDragEvent = function (evt) {
+    var feature = this.getFeature_(evt);
+
+    this.deltaX = evt.coordinate[0] - this.coordinate_[0];
+    this.deltaY = evt.coordinate[1] - this.coordinate_[1];
+
+    feature.getGeometry().translate(this.deltaX, this.deltaY);
+
+    var element = evt.map.getTargetElement();
+    element.style.cursor = this.grabbingCursor_;
+
+    this.handleModify_(evt);
+
+    this.coordinate_[0] = evt.coordinate[0];
+    this.coordinate_[1] = evt.coordinate[1];
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ */
+ModifyBoxInteraction.prototype.handleMoveEvent = function (evt) {
+    var feature = this.getFeatureUnderMouse_(evt);
+
+    var element = evt.map.getTargetElement();
+
+    if (feature) {
+        if (element.style.cursor !== this.grabCursor_) {
+            this.previousCursor_ = element.style.cursor;
+            element.style.cursor = this.grabCursor_;
+        }
+    } else if (this.previousCursor_ !== undefined) {
+        element.style.cursor = this.previousCursor_;
+        this.previousCursor_ = undefined;
+    }
+};
+
+
+/**
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+ModifyBoxInteraction.prototype.handleUpEvent = function (evt) {
+
+    this.deltaX = 0;
+    this.deltaY = 0;
+
+    var element = evt.map.getTargetElement();
+
+    if (this.feature_) {
+        element.style.cursor = this.grabCursor_;
+    } else {
+        element.style.cursor = undefined;
+    }
+
+    this.dispatchEvent({type: "modifyend", feature: this.feature_});
+
+
+    this.coordinate_ = null;
+    this.feature_ = null;
+    return false;
+};
+
+
+
+/**
+ * @inheritDoc
+ */
+ModifyBoxInteraction.prototype.handleModify_ = function (e) {
+    var featureModifiedByModifyPoint = this.getFeatureOfModifyPoint_(this.feature_);
+
+    // cas d'une feature hors point modifié par un de ses points de modification
+    if (featureModifiedByModifyPoint) {
+
+        this.setFeatureByModifyPoints_(featureModifiedByModifyPoint);
+
+        // cas d'une feature autre qu'un point pour bouger ses points de modification
+    } else {
+        this.moveModifyPointsWithFeature_();
+
+    }
+
+};
+
+/**
+ * @inheritDoc
+ */
+ModifyBoxInteraction.prototype.setActive = function (active) {
+    ol.interaction.Pointer.prototype.setActive.call(this, active);
+
+    if (active) {
+        this.enableModificationPoints(this.features);
+    } else {
+        this.disableModificationPoints(this.features);
+    }
+};
+
+//activer les points de modification
+ModifyBoxInteraction.prototype.enableModificationPoints = function (featuresCollection) {
+    this.getMap().addLayer(this.overlay_);
+    this.overlayPoints_ = [];
+
+    featuresCollection.forEach(function (feature) {
+        this.addModificationPoints_(feature);
+
+    }.bind(this));
+};
+
+//desactiver les points de modification
+ModifyBoxInteraction.prototype.disableModificationPoints = function (featuresCollection) {
+    this.removeModificationPoints_(featuresCollection);
+};
+
+
+ModifyBoxInteraction.prototype.removeModificationPoints_ = function (featuresCollection) {
+    // retirer les interractions sur les points de modification
+    for (var i in this.overlayPoints_) {
+        for (var u in this.overlayPoints_[i].modificationPoints) {
+            featuresCollection.remove(this.overlayPoints_[i].modificationPoints[u]);
+        }
+    }
+
+    this.overlay_.getSource().clear();
+    this.getMap().removeLayer(this.overlay_);
+    this.overlayPoints_ = [];
+
+
+};
+
+ModifyBoxInteraction.prototype.addModificationPoints_ = function (feature) {
+
+    var coordsOfBoxCorners = feature.getGeometry().getCoordinates()[0];
+
+    var modificationPoints = [];
+
+    for (var i in coordsOfBoxCorners) {
+        if (i === "4") {
+            modificationPoints[i] = modificationPoints[0];
+            continue;
+        }
+
+        var modificationPoint = new ol.Feature({geometry: new ol.geom.Point(coordsOfBoxCorners[i])});
+        this.overlay_.getSource().addFeature(modificationPoint);
+
+        modificationPoints[i] = modificationPoint;
+        this.features.push(modificationPoint);
+    }
+
+    this.overlayPoints_.push({feature: feature, modificationPoints: modificationPoints});
+};
+
+
+//desactiver les points de modification
+ModifyBoxInteraction.prototype.getFeatureUnderMouse_ = function (evt) {
+    return evt.map.forEachFeatureAtPixel(evt.pixel,
+            function (feature) {
+                for (var i in this.features.getArray()) {
+                    if (this.features.getArray()[i] === feature) {
+                        return feature;
+                    }
+                }
+            }.bind(this));
+};
+
+ModifyBoxInteraction.prototype.getFeature_ = function (evt) {
+    return this.feature_;
+};
+
+/*
+ * Lorsqu'on fait glisser un des points de modification :
+ * - met à jour la position de tous les points de modification
+ * - met à jour la feature modifiée en se basant sur la position des points de modification
+ */
+ModifyBoxInteraction.prototype.setFeatureByModifyPoints_ = function (feature) {
+
+    var modifyPoints = this.getModifyPointsOfFeature_(feature);
+
+
+    // modifie la position des points de modification restant pour former un rectangle
+    this.updateLinkedModifyPointForBBox(this.feature_, modifyPoints);
+
+    // met à jour les coordonnées de la feature à partir des coordonées de ses points de modification
+    this.redrawFeatureByModificationPointsPosition(feature, modifyPoints);
+
+};
+
+ModifyBoxInteraction.prototype.updateLinkedModifyPointForBBox = function (modifyPointChanged, modifyPointsToUpdate) {
+    
+    var indice;
+    for (var i in modifyPointsToUpdate) {
+        if (modifyPointChanged === modifyPointsToUpdate[i]) {
+            indice = parseInt(i);
+            break;
+        }
+    }
+
+    var indicePointBefore = indice - 1;
+    var indicePointAfter = indice + 1;
+
+    if (indice === 0) {
+        indicePointBefore = 3;
+    }
+
+    if (indice === 3) {
+        indicePointAfter = 0;
+    }
+
+    if (indice % 2 !== 0) {
+        modifyPointsToUpdate[indicePointBefore].getGeometry().translate(0, this.deltaY);
+        modifyPointsToUpdate[indicePointAfter].getGeometry().translate(this.deltaX, 0);
+    } else {
+        modifyPointsToUpdate[indicePointBefore].getGeometry().translate(this.deltaX, 0);
+        modifyPointsToUpdate[indicePointAfter].getGeometry().translate(0, this.deltaY);
+    }
+
+
+//    if (this.type === "Square") {
+//        var indicePointOposed = indice + 2;
+//        
+//        if(indicePointOposed > 3){
+//            indicePointOposed  = indicePointOposed - 4;
+//        }
+//        
+////        modifyPointsToUpdate[indicePointOposed].getGeometry().translate(this.deltaY,-this.deltaX);
+//    }
+
+    modifyPointsToUpdate[4].getGeometry().setCoordinates(modifyPointsToUpdate[0].getGeometry().getCoordinates());
+
+};
+
+ModifyBoxInteraction.prototype.redrawFeatureByModificationPointsPosition = function (feature, modifyPoints) {
+
+    var newCoords = [];
+    for (var j in modifyPoints) {
+        newCoords.push(modifyPoints[j].getGeometry().getCoordinates());
+
+    }
+    feature.getGeometry().setCoordinates([newCoords]);
+};
+
+ModifyBoxInteraction.prototype.moveModifyPointsWithFeature_ = function () {
+
+    var modifyPoints = this.getModifyPointsOfFeature_(this.feature_);
+    var coords;
+    switch (this.feature_.getGeometry().getType()) {
+        case "Polygon":
+            coords = this.feature_.getGeometry().getCoordinates()[0];
+            coords.pop();
+            break;
+
+        default:
+
+            break;
+    }
+
+    for (var j in coords) {
+        modifyPoints[j].getGeometry().setCoordinates(coords[j]);
+    }
+};
+
+
+
+
+ModifyBoxInteraction.prototype.getFeatureOfModifyPoint_ = function (modifyPoint) {
+    for (var i in this.overlayPoints_) {
+        for (var u in this.overlayPoints_[i].modificationPoints) {
+
+            if (this.overlayPoints_[i].modificationPoints[u] === modifyPoint) {
+                return this.overlayPoints_[i].feature;
+            }
+        }
+    }
+};
+
+ModifyBoxInteraction.prototype.getModifyPointsOfFeature_ = function (feature) {
+    for (var i in this.overlayPoints_) {
+        if (this.overlayPoints_[i].feature === feature) {
+            return this.overlayPoints_[i].modificationPoints;
+        }
+    }
+};
+
+
+
+module.exports = ModifyBoxInteraction;
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],18:[function(require,module,exports){
 (function (global){
 // TODO check browserify usage (http://dontkry.com/posts/code/browserify-and-the-universal-module-definition.html)
 
@@ -1341,4 +2206,4 @@ jQuery.fn.geometryEditor = function( options ){
 global.ge = ge ;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ge/GeometryEditor":5,"./ge/defaultParams":9}]},{},[16]);
+},{"./ge/GeometryEditor":5,"./ge/defaultParams":9}]},{},[18]);

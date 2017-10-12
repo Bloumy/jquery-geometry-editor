@@ -21,7 +21,9 @@ var defaultParams = {
     lat: 45.0,
     zoom: 4,
     maxZoom: 18,
-    geometryType: 'Geometry'
+    geometryType: 'Geometry',
+    centerOnResults: true,
+    onResult: function(){}
 } ;
 
 module.exports = defaultParams ;

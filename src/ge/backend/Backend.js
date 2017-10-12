@@ -23,10 +23,14 @@ var Backend = function (options) {
 
     switch (options.techno) {
         case 'Leaflet':
-            this.techno = new Leaflet();
+            this.techno = new Leaflet({
+                geometryType: options.geometryType
+            });
             break;
         case 'Openlayers':
-            this.techno = new Openlayers();
+            this.techno = new Openlayers({
+                geometryType: options.geometryType
+            });
             break;
     }
 };
@@ -102,8 +106,8 @@ Backend.prototype.createFeaturesCollection = function (map) {
     return this.techno.createFeaturesCollection(map);
 };
 
-Backend.prototype.addFeaturesToLayer = function (features, layer) {
-    this.techno.addFeaturesToLayer(features, layer);
+Backend.prototype.drawCreatedHandler = function (featuresCollection, e) {
+    this.techno.drawCreatedHandler(featuresCollection, e);
 };
 
 Backend.prototype.removeFeatures = function (features) {
@@ -128,5 +132,8 @@ Backend.prototype.getGeoJsonGeometry = function (featuresCollection, geometryTyp
     return this.techno.getGeoJsonGeometry(featuresCollection, geometryType);
 };
 
+Backend.prototype.getFeaturesCount = function (featuresCollection) {
+    return this.techno.getFeaturesCount(featuresCollection);
+};
 
 module.exports = Backend;

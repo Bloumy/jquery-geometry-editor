@@ -2,6 +2,7 @@ var L = require('leaflet');
 var DrawControl = require('leaflet-draw');
 var featureCollectionToGeometry = require('./../util/featureCollectionToGeometry.js');
 var extent = require('turf-extent');
+var isSingleGeometryType = require('../util/isSingleGeometryType.js');
 
 
 /**
@@ -9,7 +10,9 @@ var extent = require('turf-extent');
  * @param {Object} options
  */
 var Leaflet = function (options) {
-    this.settings = {};
+    this.settings = {
+        geometryType: null
+    };
     $.extend(this.settings, options); // deep copy
 };
 
@@ -77,8 +80,12 @@ Leaflet.prototype.removeFeatures = function (featuresCollection) {
     featuresCollection.clearLayers();
 };
 
-Leaflet.prototype.addFeaturesToLayer = function (featuresCollection, layer) {
-    featuresCollection.addLayer(layer);
+Leaflet.prototype.drawCreatedHandler = function (featuresCollection, e, type) {
+
+    if (isSingleGeometryType(this.getGeometryType())) {
+        this.removeFeatures(featuresCollection);
+    }
+    featuresCollection.addLayer(e.layer);
 };
 
 Leaflet.prototype.addDrawControlToMap = function (map, drawOptions) {
@@ -107,6 +114,14 @@ Leaflet.prototype.addDrawEventsToMap = function (map, events) {
     map.on('draw:edited', events.onDrawModified);
     map.on('draw:deleted', events.onDrawDeleted);
 
+};
+
+/**
+ * Get output geometry type
+ * @returns {String}
+ */
+Leaflet.prototype.getGeometryType = function () {
+    return this.settings.geometryType;
 };
 
 /**
@@ -148,6 +163,12 @@ Leaflet.prototype.getGeoJsonGeometry = function (featuresCollection, geometryTyp
         return '';
     }
 
+};
+
+
+
+Leaflet.prototype.getFeaturesCount = function (featuresCollection) {
+    return featuresCollection.getLayers().length;
 };
 
 
