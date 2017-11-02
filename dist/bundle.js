@@ -1517,11 +1517,13 @@ GeometryEditor.prototype.updateDrawLayer = function () {
     if (data !== '') {
         try {
             geometry = JSON.parse(data);
+            this.setGeometry(geometry);
         } catch (err) {
             this.backend.removeFeatures(this.featuresCollection);
             return;
         }
-        this.setGeometry(geometry);
+    }else{
+        this.backend.removeFeatures(this.featuresCollection);
     }
 };
 
@@ -2522,10 +2524,12 @@ DrawControl.prototype.addModifyInteraction = function () {
 
 
     this.translateInteractionSquare = new ol.interaction.Translate({
-        features: this.featuresSquare
+        features: this.featuresSquare,
+        hitTolerance:10
     });
     this.translateInteractionBasic = new ol.interaction.Translate({
-        features: this.featuresBasic
+        features: this.featuresBasic,
+        hitTolerance:10
     });
 
     this.modifyInteractions = [
@@ -2543,12 +2547,9 @@ DrawControl.prototype.addModifyInteraction = function () {
     }.bind(this);
 
     for (var i in this.modifyInteractions) {
-
         this.modifyInteractions[i].on('modifyend', modifyend);
-
         this.getMap().addInteraction(this.modifyInteractions[i]);
     }
-
 
     this.getMap().addInteraction(this.translateInteractionSquare);
     this.getMap().addInteraction(this.translateInteractionBasic);
@@ -3186,16 +3187,6 @@ ModifyBoxInteraction.prototype.updateLinkedModifyPointForBBox = function (modify
         modifyPointsToUpdate[indicePointAfter].getGeometry().translate(0, this.deltaY);
     }
 
-
-//    if (this.type === "Square") {
-//        var indicePointOposed = indice + 2;
-//        
-//        if(indicePointOposed > 3){
-//            indicePointOposed  = indicePointOposed - 4;
-//        }
-//        
-////        modifyPointsToUpdate[indicePointOposed].getGeometry().translate(this.deltaY,-this.deltaX);
-//    }
 
     modifyPointsToUpdate[4].getGeometry().setCoordinates(modifyPointsToUpdate[0].getGeometry().getCoordinates());
 

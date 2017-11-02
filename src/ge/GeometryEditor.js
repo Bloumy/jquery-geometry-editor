@@ -141,11 +141,13 @@ GeometryEditor.prototype.updateDrawLayer = function () {
     if (data !== '') {
         try {
             geometry = JSON.parse(data);
+            this.setGeometry(geometry);
         } catch (err) {
             this.backend.removeFeatures(this.featuresCollection);
             return;
         }
-        this.setGeometry(geometry);
+    }else{
+        this.backend.removeFeatures(this.featuresCollection);
     }
 };
 
